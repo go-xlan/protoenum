@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package protoenumstatus;
+
+option go_package = "github.com/go-xlan/protoenum/protoenumstatus;protoenumstatus";
+option java_multiple_files = true;
+option java_package = "protoenumstatus";
+
+enum StatusEnum {
+	UNKNOWN = 0;
+	SUCCESS = 1;
+	FAILURE = 2;
+}
