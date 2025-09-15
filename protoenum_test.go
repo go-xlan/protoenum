@@ -4,10 +4,15 @@ import (
 	"testing"
 
 	"github.com/go-xlan/protoenum"
-	"github.com/go-xlan/protoenum/protoenumstatus"
+	"github.com/go-xlan/protoenum/protos/protoenumstatus"
 	"github.com/stretchr/testify/require"
 )
 
+// TestNewEnum verifies the creation and basic methods of Enum instance
+// Tests Code, Name, Desc, and Hans methods return expected values
+//
+// 验证 Enum 包装器的创建和基本方法
+// 测试 Code、Name、Desc 和 Hans 方法返回预期值
 func TestNewEnum(t *testing.T) {
 	enum := protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "任务完成")
 	t.Log(enum.Code())
@@ -21,6 +26,11 @@ func TestNewEnum(t *testing.T) {
 	require.Equal(t, enum.Hans(), "任务完成")
 }
 
+// TestEnum_Base verifies the Base method returns the source enum
+// Tests that the underlying Protocol Buffer enum is accessible and unchanged
+//
+// 验证 Base 方法返回原始枚举
+// 测试底层 Protocol Buffer 枚举可访问且未改变
 func TestEnum_Base(t *testing.T) {
 	enum := protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "审批通过")
 	t.Log(enum.Code())

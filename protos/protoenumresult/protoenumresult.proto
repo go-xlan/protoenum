@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package protoenumresult;
+
+option go_package = "github.com/go-xlan/protoenum/protos/protoenumresult;protoenumresult";
+option java_multiple_files = true;
+option java_package = "protoenumresult";
+
+// ResultEnum defines operation result states
+// ResultEnum 定义操作结果状态
+enum ResultEnum {
+	UNKNOWN = 0;
+	PASS = 1;
+	FAIL = 2;
+	SKIP = 3;
+}
