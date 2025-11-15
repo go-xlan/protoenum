@@ -8,23 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// enums is a test fixture containing each status enum value
-// Provides a complete Enums collection when testing each lookup method
-//
-// enums 是包含所有状态枚举值的测试固定装置
-// 提供完整的 Enums 集合用于测试所有查找方法
-var enums = protoenum.NewEnums(
-	protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
-	protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
-	protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-)
-
-// TestEnums_GetByEnum verifies lookup using Protocol Buffer enum value
+// TestEnums_GetByEnum verifies lookup with Protocol Buffer enum value
 // Tests that GetByEnum returns the correct Enum with matching properties
 //
 // 验证通过 Protocol Buffer 枚举值检索
 // 测试 GetByEnum 返回具有匹配属性的正确 Enum
 func TestEnums_GetByEnum(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
 	enum := enums.GetByEnum(protoenumstatus.StatusEnum_SUCCESS)
 	require.NotNil(t, enum)
 	t.Log(enum.Code())
@@ -42,6 +37,12 @@ func TestEnums_GetByEnum(t *testing.T) {
 // 验证通过数字代码检索
 // 测试 GetByCode 使用 int32 代码返回正确的 Enum
 func TestEnums_GetByCode(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
 	enum := enums.GetByCode(int32(protoenumstatus.StatusEnum_FAILURE.Number()))
 	require.NotNil(t, enum)
 	t.Log(enum.Code())
@@ -59,6 +60,12 @@ func TestEnums_GetByCode(t *testing.T) {
 // 验证通过字符串名称检索
 // 测试 GetByName 使用枚举名称返回正确的 Enum
 func TestEnums_GetByName(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
 	enum := enums.GetByName(protoenumstatus.StatusEnum_UNKNOWN.String())
 	require.NotNil(t, enum)
 	t.Log(enum.Code())
@@ -76,6 +83,12 @@ func TestEnums_GetByName(t *testing.T) {
 // 验证通过描述检索
 // 测试 GetByDesc 使用自定义描述返回正确的 Enum
 func TestEnums_GetByDesc(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
 	enum := enums.GetByDesc("成功")
 	require.NotNil(t, enum)
 	t.Log(enum.Code())
@@ -93,6 +106,12 @@ func TestEnums_GetByDesc(t *testing.T) {
 // 验证通过中文描述检索
 // 测试 GetByHans 使用中文文本返回正确的 Enum
 func TestEnums_GetByHans(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
 	enum := enums.GetByHans("成功")
 	require.NotNil(t, enum)
 	t.Log(enum.Code())
@@ -110,6 +129,12 @@ func TestEnums_GetByHans(t *testing.T) {
 // 验证默认值功能
 // 测试查找失败时枚举返回默认值
 func TestEnums_DefaultValue(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
 	// Test that first item becomes default
 	defaultEnum := enums.GetDefault()
 	require.NotNil(t, defaultEnum)
@@ -132,97 +157,181 @@ func TestEnums_DefaultValue(t *testing.T) {
 	require.Equal(t, defaultEnum, notFoundByDesc)
 }
 
-// TestEnums_SetDefault verifies dynamic default value setting
-// Tests that SetDefault allows changing the default value after creation
+// TestEnums_SetDefault verifies default value setting after unset
+// Tests that SetDefault works after unsetting the existing default
 //
-// 验证动态设置默认值
-// 测试 SetDefault 允许在创建后更改默认值
+// 验证丢弃后设置默认值
+// 测试 SetDefault 在丢弃现有默认值后可以工作
 func TestEnums_SetDefault(t *testing.T) {
-	// Create a new enum collection
-	customEnums := protoenum.NewEnums(
+	// Create a new enum collection with auto default
+	enums := protoenum.NewEnums(
 		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
 		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
 		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
 	)
 
-	// Change default to SUCCESS
-	successEnum := customEnums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
-	customEnums.SetDefault(successEnum)
+	// Must unset default first before setting new one
+	enums.UnsetDefault()
 
-	// Verify new default
-	newDefault := customEnums.GetDefault()
+	// Now set default to SUCCESS
+	successEnum := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
+	enums.SetDefault(successEnum)
+
+	// Check new default
+	newDefault := enums.GetDefault()
 	require.NotNil(t, newDefault)
 	require.Equal(t, "成功", newDefault.Desc())
 
 	// Test lookup returns new default when not found
-	notFound := customEnums.GetByCode(999)
+	notFound := enums.GetByCode(999)
 	require.NotNil(t, notFound)
 	require.Equal(t, "成功", notFound.Desc())
 }
 
+// TestEnums_SetDefaultPanicsOnDuplicate verifies SetDefault panics when default exists
+// Tests that SetDefault panics if default value already exists
+//
+// 验证 SetDefault 在已有默认值时 panic
+// 测试当默认值已存在时 SetDefault 会 panic
+func TestEnums_SetDefaultPanicsOnDuplicate(t *testing.T) {
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+	)
+
+	// SetDefault should panic because default already exists (first item)
+	require.Panics(t, func() {
+		successEnum := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
+		enums.SetDefault(successEnum)
+	})
+}
+
+// TestEnums_SetDefaultNilPanics verifies that SetDefault panics with nil parameter
+// Tests that passing nil to SetDefault causes panic
+//
+// 验证 SetDefault 在 nil 参数时 panic
+// 测试传递 nil 给 SetDefault 会导致 panic
+func TestEnums_SetDefaultNilPanics(t *testing.T) {
+	// Create empty collection without default
+	enums := protoenum.NewEnums[protoenumstatus.StatusEnum]()
+
+	// SetDefault with nil should panic (must.Full check)
+	require.Panics(t, func() {
+		enums.SetDefault(nil)
+	})
+}
+
+// TestEnums_UnsetDefault verifies unsetting the default value
+// Tests that UnsetDefault removes the default value and lookups return nil
+//
+// 验证取消设置默认值
+// 测试 UnsetDefault 移除默认值后查找返回 nil
+func TestEnums_UnsetDefault(t *testing.T) {
+	// Create a new enum collection with default
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	)
+
+	// Check default exists
+	require.NotNil(t, enums.GetDefault())
+	require.Equal(t, "未知", enums.GetDefault().Desc())
+
+	// Unset the default
+	enums.UnsetDefault()
+
+	// Check GetDefault panics after unset
+	require.Panics(t, func() {
+		enums.GetDefault()
+	})
+
+	// Test GetByCode also panics when not found (because no default)
+	require.Panics(t, func() {
+		enums.GetByCode(999)
+	})
+}
+
+// TestEnums_WithUnsetDefault verifies chain-style default removal
+// Tests that WithUnsetDefault removes default value and returns the instance
+//
+// 验证链式取消设置默认值
+// 测试 WithUnsetDefault 移除默认值并返回实例
+func TestEnums_WithUnsetDefault(t *testing.T) {
+	// Create enum collection and unset default in chain
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
+	).WithUnsetDefault()
+
+	// Check GetDefault panics after chain unset
+	require.Panics(t, func() {
+		enums.GetDefault()
+	})
+
+	// Test GetByCode also panics when not found (because no default)
+	require.Panics(t, func() {
+		enums.GetByCode(999)
+	})
+}
+
 // TestEnums_ChainMethods verifies chain-style configuration methods
-// Tests WithDefaultEnum, WithDefaultCode, and WithDefaultName for fluent API
+// Tests WithDefaultEnum, WithDefaultCode, and WithDefaultName with fluent API
 // Also verifies panic behavior when invalid code or name is specified
 //
 // 验证链式配置方法
 // 测试 WithDefaultEnum、WithDefaultCode 和 WithDefaultName 的流式 API
 // 同时验证指定无效代码或名称时的 panic 行为
 func TestEnums_ChainMethods(t *testing.T) {
-	// Test WithDefaultEnum chain method
+	// Test WithDefaultEnum chain method - add enum and set as default in one chain
 	t.Run("with-default-enum", func(t *testing.T) {
-		customEnums := protoenum.NewEnums(
-			protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
-			protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
-			protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-		).WithDefaultEnum(protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"))
+		// Create empty collection, then add enum and set as default using chain method
+		enums := protoenum.NewEnums[protoenumstatus.StatusEnum]().
+			WithDefaultEnum(protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"))
 
-		require.NotNil(t, customEnums.GetDefault())
-		require.Equal(t, "成功", customEnums.GetDefault().Desc())
+		require.NotNil(t, enums.GetDefault())
+		require.Equal(t, "成功", enums.GetDefault().Desc())
 	})
 
-	// Test WithDefaultCode chain method
-	t.Run("with-default-code", func(t *testing.T) {
-		customEnums := protoenum.NewEnums(
-			protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
-			protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
-			protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-		).WithDefaultCode(int32(protoenumstatus.StatusEnum_FAILURE))
-
-		require.NotNil(t, customEnums.GetDefault())
-		require.Equal(t, "失败", customEnums.GetDefault().Desc())
+	// Test that WithDefaultXxx panics when default already exists
+	t.Run("with-default-panics-on-existing", func(t *testing.T) {
+		require.Panics(t, func() {
+			// NewEnums sets first item as default, then WithDefaultCode should panic
+			protoenum.NewEnums(
+				protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
+				protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
+			).WithDefaultCode(int32(protoenumstatus.StatusEnum_SUCCESS))
+		})
 	})
 
-	// Test WithDefaultName chain method
-	t.Run("with-default-name", func(t *testing.T) {
-		customEnums := protoenum.NewEnums(
+	// Test unset then set pattern
+	t.Run("unset-then-set-default", func(t *testing.T) {
+		enums := protoenum.NewEnums(
 			protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
 			protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
 			protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-		).WithDefaultName("SUCCESS")
+		)
+		// Must unset first, then set new default
+		enums.UnsetDefault()
+		successEnum := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
+		enums.SetDefault(successEnum)
 
-		require.NotNil(t, customEnums.GetDefault())
-		require.Equal(t, "成功", customEnums.GetDefault().Desc())
+		require.NotNil(t, enums.GetDefault())
+		require.Equal(t, "成功", enums.GetDefault().Desc())
 	})
 
 	// Test chain with non-existent code (should panic)
 	t.Run("with-invalid-code-panics", func(t *testing.T) {
 		require.Panics(t, func() {
-			protoenum.NewEnums(
-				protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
-				protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
-				protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-			).WithDefaultCode(999)
+			protoenum.NewEnums[protoenumstatus.StatusEnum]().WithDefaultCode(999)
 		})
 	})
 
 	// Test chain with non-existent name (should panic)
 	t.Run("with-invalid-name-panics", func(t *testing.T) {
 		require.Panics(t, func() {
-			protoenum.NewEnums(
-				protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
-				protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
-				protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-			).WithDefaultName("NOT_EXISTS")
+			protoenum.NewEnums[protoenumstatus.StatusEnum]().WithDefaultName("NOT_EXISTS")
 		})
 	})
 }

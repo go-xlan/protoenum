@@ -1,4 +1,4 @@
-// Package protoenum: Utilities handling Protocol Buffer enum metadata management
+// Package protoenum: Utilities to handle Protocol Buffer enum metadata management
 // Provides type-safe enum descriptors with custom descriptions to enhance enum handling
 // Supports generic enum wrapping with description association to improve documentation
 //
@@ -14,31 +14,31 @@ import (
 // ProtoEnum establishes the core contract enabling Protocol Buffer enum integration
 // Serves as the generic constraint enabling type-safe enum operations across each protobuf enum
 // Bridges the native protobuf enum system with enhanced metadata management capabilities
-// Important to maintaining compile-time type checking while adding runtime descriptive features
+// Important when maintaining compile-time type checking while adding runtime descriptive features
 //
 // ProtoEnum 建立 Protocol Buffer 枚举集成的基础契约
 // 作为泛型约束实现跨所有 protobuf 枚举的类型安全包装操作
 // 在原生 protobuf 枚举系统与增强元数据管理能力之间建立桥梁
-// 对于在添加运行时描述特性时保持编译时类型安全至关重要
+// 在添加运行时描述特性的同时保持编译时类型安全至关重要
 type ProtoEnum interface {
 	// String provides the standard name of the enum value as defined in protobuf schema
-	// Important to serialization, debugging, and human-readable enum identification
+	// Important when performing serialization, debugging, and human-readable enum identification
 	// String 提供 protobuf 模式中定义的枚举值规范名称标识符
-	// 对于序列化、调试和人类可读的枚举识别至关重要
+	// 在进行序列化、调试和人类可读的枚举识别时至关重要
 	String() string
 	// Number exposes the underlying numeric wire-format encoding used in protobuf serialization
 	// Enables efficient storage, transmission, and support with protobuf specifications
 	// Number 暴露 protobuf 序列化中使用的底层数值线格式编码
-	// 实现高效存储、传输以及与 protobuf 协议规范的兼容性
+	// 实现高效存储、传输以及与 protobuf 规范的兼容性
 	Number() protoreflect.EnumNumber
 }
 
 // Enum wraps a Protocol Buffer enum with extra metadata
-// Associates a custom description with the enum value in documentation
+// Associates a custom description with the enum value during documentation
 // Uses generics to maintain type checking across different enum types
 //
 // Enum 使用附加元数据包装 Protocol Buffer 枚举
-// 为枚举值关联自定义描述以便文档化
+// 在文档化时关联枚举值与自定义描述
 // 使用泛型在不同枚举类型间保持类型安全
 type Enum[protoEnum ProtoEnum] struct {
 	enum        protoEnum // Source Protocol Buffer enum value // 源 Protocol Buffer 枚举值
@@ -61,7 +61,7 @@ func NewEnum[protoEnum ProtoEnum](enum protoEnum, description string) *Enum[prot
 // Provides access to the source enum enabling Protocol Buffer operations
 //
 // 返回底层的 Protocol Buffer 枚举值
-// 提供对原始枚举的访问以进行 Protocol Buffer 操作
+// 提供对源枚举的访问以进行 Protocol Buffer 操作
 func (c *Enum[protoEnum]) Base() protoEnum {
 	return c.enum
 }
@@ -69,8 +69,8 @@ func (c *Enum[protoEnum]) Base() protoEnum {
 // Code returns the numeric code of the enum as int32
 // Converts the Protocol Buffer enum value to a standard int32 type
 //
-// 返回枚举的数字代码作为 int32
-// 将 Protocol Buffer 枚举数字转换为标准 int32 类型
+// 返回枚举的数字代码作 int32
+// 将 Protocol Buffer 枚举数字转换成标准 int32 类型
 func (c *Enum[protoEnum]) Code() int32 {
 	return int32(c.enum.Number())
 }
@@ -85,7 +85,7 @@ func (c *Enum[protoEnum]) Name() string {
 }
 
 // Desc returns the custom description of the enum
-// Provides human-readable description in documentation purposes
+// Provides human-readable description with documentation purposes
 //
 // 返回枚举的自定义描述
 // 提供人类可读的描述用于文档目的

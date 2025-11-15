@@ -1,4 +1,4 @@
-// Package protoenum: Collection management handling Protocol Buffer enum metadata
+// Package protoenum: Collection management to handle Protocol Buffer enum metadata
 // Provides indexed collections of enum descriptors with multiple lookup methods
 // Enables fast lookup using code, name, and description with efficient enum handling
 //
@@ -8,13 +8,13 @@
 package protoenum
 
 import (
-	"github.com/pkg/errors"
+	"github.com/yyle88/must"
 )
 
 // Enums manages a collection of Enum instances with indexed lookups
 // Maintains three maps enabling efficient lookup using different identifiers
 // Provides O(1) lookup performance when searching code, name, and description
-// Supports optional default value when lookups return nothing
+// Supports optional default value when lookups find nothing
 //
 // Enums 管理 Enum 实例集合并提供索引查找
 // 维护三个映射表以通过不同标识符高效检索
@@ -29,12 +29,12 @@ type Enums[protoEnum ProtoEnum] struct {
 
 // NewEnums creates a new Enums collection from the given Enum instances
 // Builds indexed maps enabling efficient lookup using code, name, and description
-// The first item is automatically set as the default value if provided
+// The first item becomes the default value if provided
 // Returns a reference to the created Enums collection available when querying
 //
 // 从给定的 Enum 实例创建新的 Enums 集合
 // 构建索引映射以通过代码、名称和描述高效查找
-// 如果提供了参数，第一个项自动设置为默认值
+// 如果提供了参数，第一个项成为默认值
 // 返回创建的 Enums 集合指针，准备好进行查询
 func NewEnums[protoEnum ProtoEnum](params ...*Enum[protoEnum]) *Enums[protoEnum] {
 	res := &Enums[protoEnum]{
@@ -43,9 +43,20 @@ func NewEnums[protoEnum ProtoEnum](params ...*Enum[protoEnum]) *Enums[protoEnum]
 		mapDesc2Enum: make(map[string]*Enum[protoEnum], len(params)),
 	}
 	for _, enum := range params {
+		must.Full(enum)
+
+		// Check code collision // 检查代码冲突
+		must.Null(res.mapCode2Enum[enum.Code()])
 		res.mapCode2Enum[enum.Code()] = enum
+		// Check name collision // 检查名称冲突
+		must.Null(res.mapName2Enum[enum.Name()])
 		res.mapName2Enum[enum.Name()] = enum
-		res.mapDesc2Enum[enum.Desc()] = enum
+
+		// Check description collision (skip empty descriptions) // 检查描述冲突（跳过空描述）
+		if enum.Desc() != "" {
+			must.Null(res.mapDesc2Enum[enum.Desc()])
+			res.mapDesc2Enum[enum.Desc()] = enum
+		}
 	}
 	if len(params) > 0 {
 		res.defaultValue = params[0] // Set first item as default if available // 如果有参数，将第一个设置为默认值
@@ -56,90 +67,169 @@ func NewEnums[protoEnum ProtoEnum](params ...*Enum[protoEnum]) *Enums[protoEnum]
 // GetByEnum finds an Enum using its Protocol Buffer enum value
 // Uses the enum's numeric code when searching in the collection
 // Returns default value if the enum is not found in the collection
+// Panics if no default value has been configured
 //
 // 通过 Protocol Buffer 枚举值检索 Enum
 // 使用枚举的数字代码在集合中查找
 // 如果在集合中找不到枚举则返回默认值
+// 如果未配置默认值则会 panic
 func (c *Enums[protoEnum]) GetByEnum(enum protoEnum) *Enum[protoEnum] {
-	if result := c.mapCode2Enum[int32(enum.Number())]; result != nil {
-		return result
+	if res, ok := c.mapCode2Enum[int32(enum.Number())]; ok {
+		return must.Full(res)
 	}
-	return c.defaultValue
+	return c.GetDefault()
+}
+
+// MustGetByEnum finds an Enum using its Protocol Buffer enum value
+// Panics if the enum is not found in the collection
+//
+// 通过 Protocol Buffer 枚举值检索 Enum
+// 如果在集合中找不到枚举则会 panic
+func (c *Enums[protoEnum]) MustGetByEnum(enum protoEnum) *Enum[protoEnum] {
+	return must.Nice(c.mapCode2Enum[int32(enum.Number())])
 }
 
 // GetByCode finds an Enum using its numeric code
 // Performs direct map lookup using the int32 code value
 // Returns default value if no enum with the given code exists
+// Panics if no default value has been configured
 //
 // 通过数字代码检索 Enum
 // 使用 int32 代码值执行直接映射查找
 // 如果不存在具有给定代码的枚举则返回默认值
+// 如果未配置默认值则会 panic
 func (c *Enums[protoEnum]) GetByCode(code int32) *Enum[protoEnum] {
-	if result := c.mapCode2Enum[code]; result != nil {
-		return result
+	if res, ok := c.mapCode2Enum[code]; ok {
+		return must.Full(res)
 	}
-	return c.defaultValue
+	return c.GetDefault()
+}
+
+// MustGetByCode finds an Enum using its numeric code
+// Panics if no enum with the given code exists
+//
+// 通过数字代码检索 Enum
+// 如果不存在具有给定代码的枚举则会 panic
+func (c *Enums[protoEnum]) MustGetByCode(code int32) *Enum[protoEnum] {
+	return must.Nice(c.mapCode2Enum[code])
 }
 
 // GetByName finds an Enum using its string name
 // Performs direct map lookup using the enum name string
 // Returns default value if no enum with the given name exists
+// Panics if no default value has been configured
 //
 // 通过字符串名称检索 Enum
 // 使用枚举名称字符串执行直接映射查找
 // 如果不存在具有给定名称的枚举则返回默认值
+// 如果未配置默认值则会 panic
 func (c *Enums[protoEnum]) GetByName(name string) *Enum[protoEnum] {
-	if result := c.mapName2Enum[name]; result != nil {
-		return result
+	if res, ok := c.mapName2Enum[name]; ok {
+		return must.Full(res)
 	}
-	return c.defaultValue
+	return c.GetDefault()
+}
+
+// MustGetByName finds an Enum using its string name
+// Panics if no enum with the given name exists
+//
+// 通过字符串名称检索 Enum
+// 如果不存在具有给定名称的枚举则会 panic
+func (c *Enums[protoEnum]) MustGetByName(name string) *Enum[protoEnum] {
+	return must.Nice(c.mapName2Enum[name])
 }
 
 // GetByDesc finds an Enum using its description
 // Performs direct map lookup using the custom description string
 // Returns default value if no enum with the given description exists
+// Panics if no default value has been configured
 //
 // 通过描述检索 Enum
 // 使用自定义描述字符串执行直接映射查找
 // 如果不存在具有给定描述的枚举则返回默认值
+// 如果未配置默认值则会 panic
 func (c *Enums[protoEnum]) GetByDesc(desc string) *Enum[protoEnum] {
-	if result := c.mapDesc2Enum[desc]; result != nil {
-		return result
+	if res, ok := c.mapDesc2Enum[desc]; ok {
+		return must.Full(res)
 	}
-	return c.defaultValue
+	return c.GetDefault()
+}
+
+// MustGetByDesc finds an Enum using its description
+// Panics if no enum with the given description exists
+//
+// 通过描述检索 Enum
+// 如果不存在具有给定描述的枚举则会 panic
+func (c *Enums[protoEnum]) MustGetByDesc(desc string) *Enum[protoEnum] {
+	return must.Nice(c.mapDesc2Enum[desc])
 }
 
 // GetByHans finds an Enum using its Chinese description
 // Alias to GetByDesc method, convenient with Chinese language support
 // Returns default value if no enum with the given Chinese description exists
+// Panics if no default value has been configured
 //
 // 通过中文描述检索 Enum
 // GetByDesc 方法的别名，方便中文语言支持
 // 如果不存在具有给定中文描述的枚举则返回默认值
+// 如果未配置默认值则会 panic
 func (c *Enums[protoEnum]) GetByHans(desc string) *Enum[protoEnum] {
 	return c.GetByDesc(desc)
 }
 
+// MustGetByHans finds an Enum using its Chinese description
+// Alias to MustGetByDesc method, convenient with Chinese language support
+// Panics if no enum with the given Chinese description exists
+//
+// 通过中文描述检索 Enum
+// MustGetByDesc 方法的别名，方便中文语言支持
+// 如果不存在具有给定中文描述的枚举则会 panic
+func (c *Enums[protoEnum]) MustGetByHans(desc string) *Enum[protoEnum] {
+	return c.MustGetByDesc(desc)
+}
+
+// GetDefault returns the current default Enum value
+// Panics if no default value has been configured
+//
+// 返回当前的默认 Enum 值
+// 如果未配置默认值则会 panic
+func (c *Enums[protoEnum]) GetDefault() *Enum[protoEnum] {
+	return must.Full(c.defaultValue)
+}
+
 // SetDefault sets the default Enum value to return when lookups fail
 // Allows dynamic configuration of the fallback value after creation
-// Pass nil to clear the default value
+// Panics if defaultEnum is nil, use UnsetDefault to clear the default value
 //
 // 设置查找失败时返回的默认 Enum 值
 // 允许在创建后动态配置回退值
-// 传递 nil 可清除默认值
+// 如果 defaultEnum 为 nil 则会 panic，使用 UnsetDefault 清除默认值
 func (c *Enums[protoEnum]) SetDefault(defaultEnum *Enum[protoEnum]) {
-	c.defaultValue = defaultEnum
+	must.Null(c.defaultValue)
+	c.defaultValue = must.Full(defaultEnum)
+}
+
+// UnsetDefault unsets the default Enum value
+// After calling this method, GetByXxx lookups will panic if not found
+// Panics if no default value currently exists
+//
+// 取消设置默认 Enum 值
+// 调用此方法后，GetByXxx 查找失败时会 panic
+// 如果当前无默认值则会 panic
+func (c *Enums[protoEnum]) UnsetDefault() {
+	must.Full(c.defaultValue)
+	c.defaultValue = nil
 }
 
 // WithDefaultEnum sets the default Enum value and returns the Enums instance
 // Enables fluent chain-style configuration during initialization
-// Useful for setting defaults in global variable declarations
+// Useful when setting defaults in global variable declarations
 //
 // 设置默认 Enum 值并返回 Enums 实例
 // 支持初始化时的流式链式配置
 // 适用于在全局变量声明中设置默认值
 func (c *Enums[protoEnum]) WithDefaultEnum(defaultEnum *Enum[protoEnum]) *Enums[protoEnum] {
-	c.defaultValue = defaultEnum
+	c.SetDefault(defaultEnum)
 	return c
 }
 
@@ -151,12 +241,7 @@ func (c *Enums[protoEnum]) WithDefaultEnum(defaultEnum *Enum[protoEnum]) *Enums[
 // 当你知道默认枚举代码时的便捷链式方法
 // 如果指定的代码不存在则会 panic
 func (c *Enums[protoEnum]) WithDefaultCode(code int32) *Enums[protoEnum] {
-	enum := c.mapCode2Enum[code]
-	if enum == nil {
-		panic(errors.Errorf("enum with code %d not found in collection", code))
-	}
-	c.defaultValue = enum
-	return c
+	return c.WithDefaultEnum(must.Full(c.mapCode2Enum[code]))
 }
 
 // WithDefaultName sets the default using an enum name and returns the Enums instance
@@ -167,19 +252,17 @@ func (c *Enums[protoEnum]) WithDefaultCode(code int32) *Enums[protoEnum] {
 // 当你知道默认枚举名称时的便捷链式方法
 // 如果指定的名称不存在则会 panic
 func (c *Enums[protoEnum]) WithDefaultName(name string) *Enums[protoEnum] {
-	enum := c.mapName2Enum[name]
-	if enum == nil {
-		panic(errors.Errorf("enum with name %s not found in collection", name))
-	}
-	c.defaultValue = enum
-	return c
+	return c.WithDefaultEnum(must.Full(c.mapName2Enum[name]))
 }
 
-// GetDefault returns the current default Enum value
-// Returns nil if no default value has been configured
+// WithUnsetDefault unsets the default Enum value and returns the Enums instance
+// Enables fluent chain-style configuration to remove default value
+// After this, GetByXxx lookups will panic if not found
 //
-// 返回当前的默认 Enum 值
-// 如果未配置默认值则返回 nil
-func (c *Enums[protoEnum]) GetDefault() *Enum[protoEnum] {
-	return c.defaultValue
+// 取消设置默认 Enum 值并返回 Enums 实例
+// 支持流式链式配置以移除默认值
+// 之后 GetByXxx 查找失败时会 panic
+func (c *Enums[protoEnum]) WithUnsetDefault() *Enums[protoEnum] {
+	c.UnsetDefault()
+	return c
 }

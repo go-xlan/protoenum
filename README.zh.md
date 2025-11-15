@@ -1,13 +1,13 @@
 [![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/go-xlan/protoenum/release.yml?branch=main&label=BUILD)](https://github.com/go-xlan/protoenum/actions/workflows/release.yml?query=branch%3Amain)
 [![GoDoc](https://pkg.go.dev/badge/github.com/go-xlan/protoenum)](https://pkg.go.dev/github.com/go-xlan/protoenum)
 [![Coverage Status](https://img.shields.io/coveralls/github/go-xlan/protoenum/main.svg)](https://coveralls.io/github/go-xlan/protoenum?branch=main)
-[![Supported Go Versions](https://img.shields.io/badge/Go-1.22--1.25-lightgrey.svg)](https://go.dev/)
+[![Supported Go Versions](https://img.shields.io/badge/Go-1.22--1.25-lightgrey.svg)](https://github.com/go-xlan/protoenum)
 [![GitHub Release](https://img.shields.io/github/release/go-xlan/protoenum.svg)](https://github.com/go-xlan/protoenum/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-xlan/protoenum)](https://goreportcard.com/report/github.com/go-xlan/protoenum)
 
 # protoenum
 
-`protoenum` 是一个 Go 语言包，提供管理 Protobuf 枚举元数据的工具。它将 Protobuf 枚举值与自定义描述包装在一起，并提供枚举集合支持按代码、名称或描述进行快速查找。
+`protoenum` 是一个 Go 语言包，提供管理 Protobuf 枚举元数据的工具。它将 Protobuf 枚举值与自定义描述包装在一起，并提供枚举集合支持按代码、名称或描述进行简单查找。
 
 ---
 
@@ -20,10 +20,10 @@
 ## 核心特性
 
 🎯 **智能枚举管理**：将 Protobuf 枚举与自定义描述和元数据包装
-⚡ **多方式查找**：支持通过代码、名称或描述快速查找
+⚡ **多方式查找**：支持通过代码、名称或描述快速查找，带严格验证
 🔄 **类型安全操作**：保持 protobuf 类型安全同时增强元数据
-🌍 **生产就绪**：经过实战检验的企业级枚举处理方案
-📋 **零依赖**：轻量级解决方案，仅使用标准库
+🛡️ **严格设计**：单一使用模式防止误用，强制要求默认值
+🌍 **生产级别**：经过实战检验的企业级枚举处理方案
 
 ## 安装
 
@@ -45,10 +45,10 @@ go get github.com/go-xlan/protoenum
 package main
 
 import (
-	"fmt"
-
 	"github.com/go-xlan/protoenum"
 	"github.com/go-xlan/protoenum/protos/protoenumstatus"
+	"github.com/yyle88/zaplog"
+	"go.uber.org/zap"
 )
 
 // 构建状态枚举集合
@@ -60,17 +60,17 @@ var enums = protoenum.NewEnums(
 
 func main() {
 	// 从 protobuf 枚举获取增强描述（找不到时返回默认值）
-	successStatus := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
-	fmt.Printf("状态: %s\n", successStatus.Desc())
+	item := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
+	zaplog.LOG.Debug("desc", zap.String("msg", item.Desc()))
 
-	// protoenum 与原生枚举间转换（有默认值回退保障）
-	statusEnum := enums.GetByName("SUCCESS")
-	native := protoenumstatus.StatusEnum(statusEnum.Code())
-	fmt.Printf("原生枚举: %v\n", native)
+	// 在 protoenum 和原生枚举之间转换（安全且有默认值回退）
+	enum := enums.GetByName("SUCCESS")
+	base := protoenumstatus.StatusEnum(enum.Code())
+	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
 
 	// 在业务逻辑中使用
-	if native == protoenumstatus.StatusEnum_SUCCESS {
-		fmt.Println("操作完成！")
+	if base == protoenumstatus.StatusEnum_SUCCESS {
+		zaplog.LOG.Debug("done")
 	}
 }
 ```
@@ -83,10 +83,10 @@ func main() {
 package main
 
 import (
-	"fmt"
-
 	"github.com/go-xlan/protoenum"
 	"github.com/go-xlan/protoenum/protos/protoenumresult"
+	"github.com/yyle88/zaplog"
+	"go.uber.org/zap"
 )
 
 // 构建枚举集合
@@ -99,22 +99,22 @@ var enums = protoenum.NewEnums(
 
 func main() {
 	// 按枚举代码查找（找不到时返回默认值）
-	skipResult := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
-	fmt.Printf("结果: %s\n", skipResult.Desc())
+	skip := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
+	zaplog.LOG.Debug("desc", zap.String("msg", skip.Desc()))
 
-	// 按枚举名称查找（有默认值回退保障）
-	passResult := enums.GetByName("PASS")
-	native := protoenumresult.ResultEnum(passResult.Code())
-	fmt.Printf("原生: %v\n", native)
+	// 按枚举名称查找（安全且有默认值回退）
+	pass := enums.GetByName("PASS")
+	base := protoenumresult.ResultEnum(pass.Code())
+	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
 
 	// 使用原生枚举的业务逻辑
-	if native == protoenumresult.ResultEnum_PASS {
-		fmt.Println("测试通过！")
+	if base == protoenumresult.ResultEnum_PASS {
+		zaplog.LOG.Debug("pass")
 	}
 
 	// 按中文描述查找（找不到时返回默认值）
-	result := enums.GetByDesc("跳过")
-	fmt.Printf("名称: %s\n", result.Name())
+	skip = enums.GetByDesc("跳过")
+	zaplog.LOG.Debug("name", zap.String("msg", skip.Name()))
 }
 ```
 
@@ -127,24 +127,35 @@ func main() {
 
 | 方法 | 说明 | 返回值 |
 |------|------|--------|
-| `NewEnum(value, desc)` | 创建枚举包装器 | `*Enum[T]` |
+| `NewEnum(value, desc)` | 创建枚举实例 | `*Enum[T]` |
+| `enum.Base()` | 获取底层 protobuf 枚举 | `T` |
 | `enum.Code()` | 获取数值代码 | `int32` |
 | `enum.Name()` | 获取枚举名称 | `string` |
 | `enum.Desc()` | 获取描述 | `string` |
+| `enum.Hans()` | 获取中文描述（Desc 的别名） | `string` |
 
 ### 集合操作
 
 | 方法 | 说明 | 返回值 |
 |------|------|--------|
-| `NewEnums(items...)` | 创建枚举集合（第一项作为默认值） | `*Enums[T]` |
-| `enums.GetByCode(code)` | 按代码查找（找不到时返回默认值） | `*Enum[T]` |
-| `enums.GetByName(name)` | 按名称查找（找不到时返回默认值） | `*Enum[T]` |
-| `enums.GetByDesc(desc)` | 按描述查找（找不到时返回默认值） | `*Enum[T]` |
-| `enums.SetDefault(enum)` | 动态设置默认值 | `void` |
-| `enums.GetDefault()` | 获取当前默认值 | `*Enum[T]` |
+| `NewEnums(items...)` | 创建集合并严格验证（第一项成为默认值） | `*Enums[T]` |
+| `enums.GetByEnum(enum)` | 按 protobuf 枚举查找（找不到返回默认值，无默认值则 panic） | `*Enum[T]` |
+| `enums.GetByCode(code)` | 按代码查找（找不到返回默认值，无默认值则 panic） | `*Enum[T]` |
+| `enums.GetByName(name)` | 按名称查找（找不到返回默认值，无默认值则 panic） | `*Enum[T]` |
+| `enums.GetByDesc(desc)` | 按描述查找（找不到返回默认值，无默认值则 panic） | `*Enum[T]` |
+| `enums.GetByHans(hans)` | 按中文描述查找（GetByDesc 的别名） | `*Enum[T]` |
+| `enums.MustGetByEnum(enum)` | 严格按 protobuf 枚举查找（找不到则 panic） | `*Enum[T]` |
+| `enums.MustGetByCode(code)` | 严格按代码查找（找不到则 panic） | `*Enum[T]` |
+| `enums.MustGetByName(name)` | 严格按名称查找（找不到则 panic） | `*Enum[T]` |
+| `enums.MustGetByDesc(desc)` | 严格按描述查找（找不到则 panic） | `*Enum[T]` |
+| `enums.MustGetByHans(hans)` | 严格按中文描述查找（MustGetByDesc 的别名） | `*Enum[T]` |
+| `enums.GetDefault()` | 获取当前默认值（未设置则 panic） | `*Enum[T]` |
+| `enums.SetDefault(enum)` | 设置默认值（要求当前无默认值） | `void` |
+| `enums.UnsetDefault()` | 移除默认值（要求当前有默认值） | `void` |
 | `enums.WithDefaultEnum(enum)` | 链式：通过枚举实例设置默认值 | `*Enums[T]` |
 | `enums.WithDefaultCode(code)` | 链式：通过代码设置默认值（找不到则 panic） | `*Enums[T]` |
 | `enums.WithDefaultName(name)` | 链式：通过名称设置默认值（找不到则 panic） | `*Enums[T]` |
+| `enums.WithUnsetDefault()` | 链式：移除默认值 | `*Enums[T]` |
 
 ## 使用示例
 
@@ -178,20 +189,21 @@ statusEnums := protoenum.NewEnums(
 
 **多种查找方式：**
 ```go
-// 按数字代码查找
-if enum := statusEnums.GetByCode(1); enum != nil {
-    fmt.Printf("找到: %s\n", enum.Desc())
-}
+// 按数字代码查找 - 始终返回有效枚举（找不到返回默认值）
+enum := statusEnums.GetByCode(1)
+fmt.Printf("找到: %s\n", enum.Desc())
 
-// 按枚举名称查找
-if enum := statusEnums.GetByName("SUCCESS"); enum != nil {
-    fmt.Printf("状态: %s\n", enum.Desc())
-}
+// 按枚举名称查找 - 保证非 nil
+enum = statusEnums.GetByName("SUCCESS")
+fmt.Printf("状态: %s\n", enum.Desc())
 
-// 按中文描述查找
-if enum := statusEnums.GetByDesc("成功"); enum != nil {
-    fmt.Printf("代码: %d\n", enum.Code())
-}
+// 按中文描述查找 - 安全且有默认值回退
+enum = statusEnums.GetByDesc("成功")
+fmt.Printf("代码: %d\n", enum.Code())
+
+// 严格查找 - 找不到则 panic（无默认值回退）
+enum = statusEnums.MustGetByCode(1)
+fmt.Printf("严格: %s\n", enum.Desc())
 ```
 
 ### 高级用法
@@ -200,20 +212,21 @@ if enum := statusEnums.GetByDesc("成功"); enum != nil {
 **类型转换模式：**
 ```go
 // 从枚举包装器转换为原生 protobuf 枚举
-if statusEnum := enums.GetByName("SUCCESS"); statusEnum != nil {
-    native := protoenumstatus.StatusEnum(statusEnum.Code())
-    // 在 protobuf 操作中使用原生枚举
-}
+// 始终返回有效枚举（带默认值回退）
+statusEnum := enums.GetByName("SUCCESS")
+native := protoenumstatus.StatusEnum(statusEnum.Code())
+// 在 protobuf 操作中安全使用原生枚举
 ```
 
-**查找时的错误处理：**
+**严格验证模式：**
 ```go
-// 安全查找和空值检查
-if result := enums.GetByDesc("不存在的描述"); result == nil {
-    fmt.Println("未找到枚举")
-} else {
-    fmt.Printf("找到: %s\n", result.Name())
-}
+// 使用 MustGetByXxx 进行严格验证（找不到则 panic）
+result := enums.MustGetByDesc("成功")  // 找不到会 panic
+fmt.Printf("找到: %s\n", result.Name())
+
+// GetByXxx 对未知值返回默认值
+result = enums.GetByDesc("不存在的描述")  // 返回默认值（UNKNOWN）
+fmt.Printf("回退: %s\n", result.Name())
 ```
 
 ### 默认值和链式配置
@@ -228,18 +241,25 @@ enums := protoenum.NewEnums(
 defaultEnum := enums.GetDefault()
 ```
 
-**链式风格默认值配置：**
+**严格的默认值管理：**
 ```go
-// 在初始化时使用链式方法设置默认值
-var globalEnums = protoenum.NewEnums(
+// 集合必须有默认值
+// NewEnums 自动将第一项设为默认值
+enums := protoenum.NewEnums(
     protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, "未知"),
     protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, "成功"),
-    protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, "失败"),
-).WithDefaultCode(0)  // 设置 UNKNOWN 为默认值
+)
 
-// 查找失败时返回默认值而不是 nil
-notFound := enums.GetByCode(999)  // 返回默认值（UNKNOWN）而不是 nil
-fmt.Printf("回退值: %s\n", notFound.Desc())  // 无需空值检查即可安全使用
+// 查找失败返回默认值（永不返回 nil）
+notFound := enums.GetByCode(999)  // 返回 UNKNOWN（默认值）
+fmt.Printf("回退值: %s\n", notFound.Desc())  // 无需 nil 检查即可安全使用
+
+// 使用严格模式更改默认值
+enums.UnsetDefault()  // 必须先取消设置
+enums.SetDefault(enums.MustGetByCode(1))  // 然后设置新默认值
+
+// UnsetDefault 后，查找失败会 panic
+// 这强制实施单一使用模式：集合必须有默认值
 ```
 
 <!-- TEMPLATE (ZH) BEGIN: STANDARD PROJECT FOOTER -->
