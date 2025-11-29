@@ -1,10 +1,12 @@
 // Package protoenum: Utilities to handle Protocol Buffer enum metadata management
-// Provides type-safe enum descriptors with custom descriptions to enhance enum handling
-// Supports generic enum wrapping with description association to improve documentation
+// Provides type-safe enum descriptors with Go native enum binding and custom metadata
+// Supports triple generic wrapping: protoEnum, plainEnum, and extraMeta
+// Enables seamless conversion between protobuf enums and Go native enum types
 //
 // protoenum: Protocol Buffer 枚举元数据管理包装工具
-// 提供带有自定义描述的类型安全枚举描述符，增强枚举处理能力
-// 支持泛型枚举包装和描述关联，提供更好的文档支持
+// 提供带有 Go 原生枚举绑定和自定义元数据的类型安全枚举描述符
+// 支持三泛型包装：protoEnum、plainEnum 和 extraMeta
+// 实现 protobuf 枚举与 Go 原生枚举类型之间的无缝转换
 package protoenum
 
 import (
@@ -33,27 +35,69 @@ type ProtoEnum interface {
 	Number() protoreflect.EnumNumber
 }
 
-// Enum wraps a Protocol Buffer enum with extra metadata
-// Associates a custom description with the enum value during documentation
-// Uses generics to maintain type checking across different enum types
+// Enum wraps a Protocol Buffer enum with Go native enum and custom metadata
+// Bridges protobuf enum (protoEnum) with Go native enum (plainEnum) via Pure() method
+// Associates custom metadata with the enum value via Meta() method
+// Uses triple generics to maintain type checking across protobuf, Go native enum, and metadata
 //
-// Enum 使用附加元数据包装 Protocol Buffer 枚举
-// 在文档化时关联枚举值与自定义描述
-// 使用泛型在不同枚举类型间保持类型安全
-type Enum[protoEnum ProtoEnum] struct {
-	enum        protoEnum // Source Protocol Buffer enum value // 源 Protocol Buffer 枚举值
-	description string    // Custom description of the enum // 枚举的自定义描述
+// Enum 使用 Go 原生枚举和自定义元数据包装 Protocol Buffer 枚举
+// 通过 Pure() 方法桥接 protobuf 枚举 (protoEnum) 和 Go 原生枚举 (plainEnum)
+// 通过 Meta() 方法关联枚举值与自定义元数据
+// 使用三泛型在 protobuf、Go 原生枚举和元数据类型间保持类型安全
+type Enum[protoEnum ProtoEnum, plainEnum comparable, extraMeta any] struct {
+	enum protoEnum // Source Protocol Buffer enum value // 源 Protocol Buffer 枚举值
+	pure plainEnum // Go native enum value (e.g. type StatusType string) // Go 原生枚举值（如 type StatusType string）
+	meta extraMeta // Custom metadata of the enum // 枚举的自定义元数据
 }
 
-// NewEnum creates a new Enum instance with the given enum value and description
-// Returns a reference to the created Enum instance allowing simple chaining
+// NewEnum creates a new Enum instance binding protobuf enum with Go native enum
+// Use this when you just need enum mapping without description
+// The pure param accepts Go native enum type (e.g. type StatusType string)
+// Returns a reference to the created Enum instance, supporting chained invocation
 //
-// 使用给定的枚举值和描述创建新的 Enum 包装器
+// 创建新的 Enum 实例，绑定 protobuf 枚举与 Go 原生枚举
+// 当只需要枚举映射而不需要描述时使用此函数
+// pure 参数接受 Go 原生枚举类型（如 type StatusType string）
 // 返回创建的 Enum 实例指针以便链式调用
-func NewEnum[protoEnum ProtoEnum](enum protoEnum, description string) *Enum[protoEnum] {
-	return &Enum[protoEnum]{
-		enum:        enum,
-		description: description,
+func NewEnum[protoEnum ProtoEnum, plainEnum comparable](enum protoEnum, pure plainEnum) *Enum[protoEnum, plainEnum, *MetaNone] {
+	return &Enum[protoEnum, plainEnum, *MetaNone]{
+		enum: enum,
+		pure: pure,
+		meta: &MetaNone{},
+	}
+}
+
+// NewEnumWithDesc creates a new Enum instance with protobuf enum, Go native enum, and description
+// Use this when you need both enum mapping and human-readable description
+// The pure param accepts Go native enum type (e.g. type StatusType string)
+// The desc param provides custom description used in docs and UI rendering
+//
+// 创建带有 protobuf 枚举、Go 原生枚举和描述的新 Enum 实例
+// 当需要枚举映射和人类可读描述时使用此函数
+// pure 参数接受 Go 原生枚举类型（如 type StatusType string）
+// desc 参数提供用于文档和显示的自定义描述
+func NewEnumWithDesc[protoEnum ProtoEnum, plainEnum comparable](enum protoEnum, pure plainEnum, description string) *Enum[protoEnum, plainEnum, *MetaDesc] {
+	return &Enum[protoEnum, plainEnum, *MetaDesc]{
+		enum: enum,
+		pure: pure,
+		meta: &MetaDesc{description: description},
+	}
+}
+
+// NewEnumWithMeta creates a new Enum instance with protobuf enum, Go native enum, and custom metadata
+// Use this when you need customized metadata types beyond simple string description
+// The pure param accepts Go native enum type (e.g. type StatusType string)
+// The meta param accepts custom metadata types (e.g. i18n descriptions with multiple languages)
+//
+// 创建带有 protobuf 枚举、Go 原生枚举和自定义元数据的新 Enum 实例
+// 当需要超越简单字符串描述的灵活元数据类型时使用此函数
+// pure 参数接受 Go 原生枚举类型（如 type StatusType string）
+// meta 参数接受任意自定义元数据类型（如双语描述）
+func NewEnumWithMeta[protoEnum ProtoEnum, plainEnum comparable, extraMeta any](enum protoEnum, pure plainEnum, meta extraMeta) *Enum[protoEnum, plainEnum, extraMeta] {
+	return &Enum[protoEnum, plainEnum, extraMeta]{
+		enum: enum,
+		pure: pure,
+		meta: meta,
 	}
 }
 
@@ -62,7 +106,7 @@ func NewEnum[protoEnum ProtoEnum](enum protoEnum, description string) *Enum[prot
 //
 // 返回底层的 Protocol Buffer 枚举值
 // 提供对源枚举的访问以进行 Protocol Buffer 操作
-func (c *Enum[protoEnum]) Base() protoEnum {
+func (c *Enum[protoEnum, plainEnum, extraMeta]) Base() protoEnum {
 	return c.enum
 }
 
@@ -71,7 +115,7 @@ func (c *Enum[protoEnum]) Base() protoEnum {
 //
 // 返回枚举的数字代码作 int32
 // 将 Protocol Buffer 枚举数字转换成标准 int32 类型
-func (c *Enum[protoEnum]) Code() int32 {
+func (c *Enum[protoEnum, plainEnum, extraMeta]) Code() int32 {
 	return int32(c.enum.Number())
 }
 
@@ -80,24 +124,30 @@ func (c *Enum[protoEnum]) Code() int32 {
 //
 // 返回枚举值的字符串名称
 // 获取 Protocol Buffer 枚举的字符串表示
-func (c *Enum[protoEnum]) Name() string {
+func (c *Enum[protoEnum, plainEnum, extraMeta]) Name() string {
 	return c.enum.String()
 }
 
-// Desc returns the custom description of the enum
-// Provides human-readable description with documentation purposes
+// Pure returns the Go native enum value associated with this enum
+// Enables type-safe conversion from protobuf enum to Go native enum (e.g. type StatusType string)
+// Use this to get the plain enum value when working with Go native enum patterns
+// Bridges protobuf enums with existing Go enum-based business logic seamlessly
 //
-// 返回枚举的自定义描述
-// 提供人类可读的描述用于文档目的
-func (c *Enum[protoEnum]) Desc() string {
-	return c.description
+// 返回与此枚举关联的 Go 原生枚举值
+// 实现从 protobuf 枚举到 Go 原生枚举的类型安全转换（如 type StatusType string）
+// 在使用 Go 原生枚举模式时使用此方法获取朴素枚举值
+// 在桥接 protobuf 枚举与现有基于 Go 枚举的业务逻辑时至关重要
+func (c *Enum[protoEnum, plainEnum, extraMeta]) Pure() plainEnum {
+	return c.pure
 }
 
-// Hans returns the Chinese description of the enum
-// Alias to GetByDesc method, convenient with Chinese language support
+// Meta returns the metadata associated with this enum
+// Provides access to custom metadata like description via MetaDesc
+// Use this when you need to access extended enum metadata
 //
-// 返回枚举的中文描述
-// Desc 方法的别名，方便中文语言支持
-func (c *Enum[protoEnum]) Hans() string {
-	return c.description
+// 返回与此枚举关联的元数据
+// 提供对自定义元数据（如通过 MetaDesc 获取描述）的访问
+// 在需要访问额外的枚举元数据时使用此方法
+func (c *Enum[protoEnum, plainEnum, extraMeta]) Meta() extraMeta {
+	return c.meta
 }

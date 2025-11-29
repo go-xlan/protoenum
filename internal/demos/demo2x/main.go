@@ -7,24 +7,36 @@ import (
 	"go.uber.org/zap"
 )
 
-// Build enum collection
-// 构建枚举集合
+// ResultType represents a Go native enum of result
+// ResultType 代表结果的 Go 原生枚举
+type ResultType string
+
+const (
+	ResultTypeUnknown ResultType = "unknown"
+	ResultTypePass    ResultType = "pass"
+	ResultTypeMiss    ResultType = "miss"
+	ResultTypeSkip    ResultType = "skip"
+)
+
+// Build enum collection with description
+// 构建带描述的枚举集合
 var enums = protoenum.NewEnums(
-	protoenum.NewEnum(protoenumresult.ResultEnum_UNKNOWN, "其它"),
-	protoenum.NewEnum(protoenumresult.ResultEnum_PASS, "通过"),
-	protoenum.NewEnum(protoenumresult.ResultEnum_FAIL, "出错"),
-	protoenum.NewEnum(protoenumresult.ResultEnum_SKIP, "跳过"),
+	protoenum.NewEnumWithDesc(protoenumresult.ResultEnum_UNKNOWN, ResultTypeUnknown, "其它"),
+	protoenum.NewEnumWithDesc(protoenumresult.ResultEnum_PASS, ResultTypePass, "通过"),
+	protoenum.NewEnumWithDesc(protoenumresult.ResultEnum_MISS, ResultTypeMiss, "出错"),
+	protoenum.NewEnumWithDesc(protoenumresult.ResultEnum_SKIP, ResultTypeSkip, "跳过"),
 )
 
 func main() {
 	// Lookup by enum code (returns default when not found)
 	// 按枚举代码查找（找不到时返回默认值）
 	skip := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
-	zaplog.LOG.Debug("desc", zap.String("msg", skip.Desc()))
+	zaplog.LOG.Debug("pure", zap.String("msg", string(skip.Pure())))
+	zaplog.LOG.Debug("desc", zap.String("msg", skip.Meta().Desc()))
 
-	// Lookup by enum name (safe with default fallback)
-	// 按枚举名称查找（安全且有默认值回退）
-	pass := enums.GetByName("PASS")
+	// Lookup by Go native enum value (type-safe lookup)
+	// 按 Go 原生枚举值查找（类型安全查找）
+	pass := enums.GetByPure(ResultTypePass)
 	base := protoenumresult.ResultEnum(pass.Code())
 	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
 
@@ -34,8 +46,9 @@ func main() {
 		zaplog.LOG.Debug("pass")
 	}
 
-	// Lookup by Chinese description (returns default when not found)
-	// 按中文描述查找（找不到时返回默认值）
-	skip = enums.GetByDesc("跳过")
-	zaplog.LOG.Debug("name", zap.String("msg", skip.Name()))
+	// Lookup by enum name (safe with default fallback)
+	// 按枚举名称查找（安全且有默认值回退）
+	miss := enums.GetByName("MISS")
+	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
+	zaplog.LOG.Debug("hans", zap.String("msg", miss.Meta().Hans()))
 }

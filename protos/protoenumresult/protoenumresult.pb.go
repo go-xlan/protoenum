@@ -28,7 +28,7 @@ type ResultEnum int32
 const (
 	ResultEnum_UNKNOWN ResultEnum = 0
 	ResultEnum_PASS    ResultEnum = 1
-	ResultEnum_FAIL    ResultEnum = 2
+	ResultEnum_MISS    ResultEnum = 2
 	ResultEnum_SKIP    ResultEnum = 3
 )
 
@@ -37,13 +37,13 @@ var (
 	ResultEnum_name = map[int32]string{
 		0: "UNKNOWN",
 		1: "PASS",
-		2: "FAIL",
+		2: "MISS",
 		3: "SKIP",
 	}
 	ResultEnum_value = map[string]int32{
 		"UNKNOWN": 0,
 		"PASS":    1,
-		"FAIL":    2,
+		"MISS":    2,
 		"SKIP":    3,
 	}
 )
@@ -84,7 +84,7 @@ const file_protoenumresult_protoenumresult_proto_rawDesc = "" +
 	"ResultEnum\x12\v\n" +
 	"\aUNKNOWN\x10\x00\x12\b\n" +
 	"\x04PASS\x10\x01\x12\b\n" +
-	"\x04FAIL\x10\x02\x12\b\n" +
+	"\x04MISS\x10\x02\x12\b\n" +
 	"\x04SKIP\x10\x03BX\n" +
 	"\x0fprotoenumresultP\x01ZCgithub.com/go-xlan/protoenum/protos/protoenumresult;protoenumresultb\x06proto3"
 

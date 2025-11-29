@@ -11,6 +11,6 @@ option java_package = "protoenumresult";
 enum ResultEnum {
 	UNKNOWN = 0;
 	PASS = 1;
-	FAIL = 2;
+	MISS = 2;
 	SKIP = 3;
 }
