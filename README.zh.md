@@ -171,6 +171,8 @@ func main() {
 | `enums.MustGetByCode(code)` | 严格按代码查找（找不到则 panic） | `*Enum[P, E, M]` |
 | `enums.MustGetByName(name)` | 严格按名称查找（找不到则 panic） | `*Enum[P, E, M]` |
 | `enums.MustGetByPure(pure)` | 严格按 Go 原生枚举查找（找不到则 panic） | `*Enum[P, E, M]` |
+| `enums.ListEnums()` | 返回所有 protoEnum 值的切片 | `[]P` |
+| `enums.ListPures()` | 返回所有 plainEnum 值的切片 | `[]E` |
 | `enums.GetDefault()` | 获取当前默认值（未设置则 panic） | `*Enum[P, E, M]` |
 | `enums.SetDefault(enum)` | 设置默认值（要求当前无默认值） | `void` |
 | `enums.UnsetDefault()` | 移除默认值（要求当前有默认值） | `void` |
@@ -233,9 +235,20 @@ fmt.Printf("状态: %s\n", enum.Meta().Desc())
 enum = statusEnums.GetByPure(StatusTypeSuccess)
 fmt.Printf("Pure: %s\n", enum.Pure())
 
-// 严格查找 - 找不到则 panic（无默认值回退）
+// 严格按 Go 原生枚举值查找（找不到则 panic）
 enum = statusEnums.MustGetByCode(1)
 fmt.Printf("严格: %s\n", enum.Meta().Desc())
+```
+
+**列出所有值:**
+```go
+// 获取所有已注册的 proto 枚举切片
+allProtoEnums := statusEnums.ListEnums()
+// > [UNKNOWN, SUCCESS, FAILURE]
+
+// 获取所有已注册的 Go 原生枚举切片
+allPlainEnums := statusEnums.ListPures()
+// > ["unknown", "success", "failure"]
 ```
 
 ### 高级用法

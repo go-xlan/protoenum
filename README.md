@@ -171,6 +171,8 @@ func main() {
 | `enums.MustGetByCode(code)` | Strict lookup by code (panics if not found) | `*Enum[P, E, M]` |
 | `enums.MustGetByName(name)` | Strict lookup by name (panics if not found) | `*Enum[P, E, M]` |
 | `enums.MustGetByPure(pure)` | Strict lookup by Go native enum (panics if not found) | `*Enum[P, E, M]` |
+| `enums.ListEnums()` | Returns a slice of all protoEnum values | `[]P` |
+| `enums.ListPures()` | Returns a slice of all plainEnum values | `[]E` |
 | `enums.GetDefault()` | Get current default value (panics if unset) | `*Enum[P, E, M]` |
 | `enums.SetDefault(enum)` | Set default (requires no existing default) | `void` |
 | `enums.UnsetDefault()` | Remove default (requires existing default) | `void` |
@@ -236,6 +238,17 @@ fmt.Printf("Pure: %s\n", enum.Pure())
 // Strict lookup - panics if not found (no default fallback)
 enum = statusEnums.MustGetByCode(1)
 fmt.Printf("Strict: %s\n", enum.Meta().Desc())
+```
+
+**Listing all values:**
+```go
+// Get a slice of all registered proto enums
+allProtoEnums := statusEnums.ListEnums()
+// > [UNKNOWN, SUCCESS, FAILURE]
+
+// Get a slice of all registered plain Go enums
+allPlainEnums := statusEnums.ListPures()
+// > ["unknown", "success", "failure"]
 ```
 
 ### Advanced Usage

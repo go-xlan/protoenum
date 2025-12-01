@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-xlan/protoenum"
+	"github.com/go-xlan/protoenum/protos/protoenumresult"
 	"github.com/go-xlan/protoenum/protos/protoenumstatus"
 	"github.com/stretchr/testify/require"
 )
@@ -403,4 +404,56 @@ func TestEnums_ChainMethods(t *testing.T) {
 			protoenum.NewEnums[protoenumstatus.StatusEnum, StatusType, *protoenum.MetaNone]().WithDefaultName("NOT_EXISTS")
 		})
 	})
+}
+
+func TestEnums_ListEnums(t *testing.T) {
+	type ResultType string
+
+	const (
+		ResultTypeUnknown ResultType = "unknown"
+		ResultTypePass    ResultType = "pass"
+		ResultTypeMiss    ResultType = "miss"
+		ResultTypeSkip    ResultType = "skip"
+	)
+
+	var enums = protoenum.NewEnums(
+		protoenum.NewEnum(protoenumresult.ResultEnum_UNKNOWN, ResultTypeUnknown),
+		protoenum.NewEnum(protoenumresult.ResultEnum_PASS, ResultTypePass),
+		protoenum.NewEnum(protoenumresult.ResultEnum_MISS, ResultTypeMiss),
+		protoenum.NewEnum(protoenumresult.ResultEnum_SKIP, ResultTypeSkip),
+	)
+
+	protoEnums := enums.ListEnums()
+	t.Log(protoEnums)
+	require.Len(t, protoEnums, 4)
+	require.Equal(t, protoenumresult.ResultEnum_UNKNOWN, protoEnums[0])
+	require.Equal(t, protoenumresult.ResultEnum_PASS, protoEnums[1])
+	require.Equal(t, protoenumresult.ResultEnum_MISS, protoEnums[2])
+	require.Equal(t, protoenumresult.ResultEnum_SKIP, protoEnums[3])
+}
+
+func TestEnums_ListPures(t *testing.T) {
+	type ResultType string
+
+	const (
+		ResultTypeUnknown ResultType = "unknown"
+		ResultTypePass    ResultType = "pass"
+		ResultTypeMiss    ResultType = "miss"
+		ResultTypeSkip    ResultType = "skip"
+	)
+
+	var enums = protoenum.NewEnums(
+		protoenum.NewEnum(protoenumresult.ResultEnum_UNKNOWN, ResultTypeUnknown),
+		protoenum.NewEnum(protoenumresult.ResultEnum_PASS, ResultTypePass),
+		protoenum.NewEnum(protoenumresult.ResultEnum_MISS, ResultTypeMiss),
+		protoenum.NewEnum(protoenumresult.ResultEnum_SKIP, ResultTypeSkip),
+	)
+
+	plainEnums := enums.ListPures()
+	t.Log(plainEnums)
+	require.Len(t, plainEnums, 4)
+	require.Equal(t, ResultTypeUnknown, plainEnums[0])
+	require.Equal(t, ResultTypePass, plainEnums[1])
+	require.Equal(t, ResultTypeMiss, plainEnums[2])
+	require.Equal(t, ResultTypeSkip, plainEnums[3])
 }

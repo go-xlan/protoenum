@@ -9,6 +9,7 @@ package protoenum
 
 import (
 	"github.com/yyle88/must"
+	"github.com/yyle88/tern/slicetern"
 )
 
 // Enums manages a collection of Enum instances with indexed lookups
@@ -21,6 +22,7 @@ import (
 // 为代码、名称和朴素枚举值搜索提供 O(1) 查找性能
 // 支持在查找失败时返回可选的默认值
 type Enums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any] struct {
+	enumElements []*Enum[protoEnum, plainEnum, extraMeta]             // Holds complete Enum instances in defined sequence // 存放所有 Enum 实例，并维持其定义的次序
 	mapCode2Enum map[int32]*Enum[protoEnum, plainEnum, extraMeta]     // Map from numeric code to Enum // 从数字代码到 Enum 的映射
 	mapName2Enum map[string]*Enum[protoEnum, plainEnum, extraMeta]    // Map from name string to Enum // 从名称字符串到 Enum 的映射
 	mapPure2Enum map[plainEnum]*Enum[protoEnum, plainEnum, extraMeta] // Map from plain enum to Enum // 从朴素枚举到 Enum 的映射
@@ -38,9 +40,11 @@ type Enums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any] struct {
 // 返回创建的 Enums 集合指针，准备好进行查询
 func NewEnums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any](params ...*Enum[protoEnum, plainEnum, extraMeta]) *Enums[protoEnum, plainEnum, extraMeta] {
 	res := &Enums[protoEnum, plainEnum, extraMeta]{
+		enumElements: append([]*Enum[protoEnum, plainEnum, extraMeta]{}, params...), // Create a distinct copy to maintain the sequence of all enum elements // 创建一个独立的副本以保持所有枚举元素的次序
 		mapCode2Enum: make(map[int32]*Enum[protoEnum, plainEnum, extraMeta], len(params)),
 		mapName2Enum: make(map[string]*Enum[protoEnum, plainEnum, extraMeta], len(params)),
 		mapPure2Enum: make(map[plainEnum]*Enum[protoEnum, plainEnum, extraMeta], len(params)),
+		defaultValue: slicetern.V0(params), // Set first item as default if available // 如果有参数，将第一个设置为默认值
 	}
 	for _, enum := range params {
 		must.Full(enum)
@@ -54,9 +58,6 @@ func NewEnums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any](params .
 		// Check pure collision // 检查朴素枚举冲突
 		must.Null(res.mapPure2Enum[enum.Pure()])
 		res.mapPure2Enum[enum.Pure()] = enum
-	}
-	if len(params) > 0 {
-		res.defaultValue = params[0] // Set first item as default if available // 如果有参数，将第一个设置为默认值
 	}
 	return res
 }
@@ -238,4 +239,24 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultName(name string) *E
 func (c *Enums[protoEnum, plainEnum, extraMeta]) WithUnsetDefault() *Enums[protoEnum, plainEnum, extraMeta] {
 	c.UnsetDefault()
 	return c
+}
+
+// ListEnums returns a slice containing all protoEnum values in the sequence they were defined.
+// ListEnums 返回一个包含所有 protoEnum 值的切片，次序与定义时一致。
+func (c *Enums[protoEnum, plainEnum, extraMeta]) ListEnums() []protoEnum {
+	var enums = make([]protoEnum, 0, len(c.enumElements))
+	for _, item := range c.enumElements {
+		enums = append(enums, item.Base())
+	}
+	return enums
+}
+
+// ListPures returns a slice containing all plainEnum values in the sequence they were defined.
+// ListPures 返回一个包含所有 plainEnum 值的切片，次序与定义时一致。
+func (c *Enums[protoEnum, plainEnum, extraMeta]) ListPures() []plainEnum {
+	var pures = make([]plainEnum, 0, len(c.mapPure2Enum))
+	for _, item := range c.enumElements {
+		pures = append(pures, item.Pure())
+	}
+	return pures
 }
