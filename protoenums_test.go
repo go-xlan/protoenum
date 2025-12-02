@@ -118,7 +118,7 @@ func TestEnums_GetByPure(t *testing.T) {
 		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, StatusTypeFailure),
 	)
 
-	// Lookup by Go native enum value
+	// Lookup using Go native enum value
 	enum := enums.GetByPure(StatusTypeSuccess)
 	require.NotNil(t, enum)
 	t.Log(enum.Code())
@@ -129,13 +129,13 @@ func TestEnums_GetByPure(t *testing.T) {
 	require.Equal(t, enum.Name(), protoenumstatus.StatusEnum_SUCCESS.String())
 	require.Equal(t, enum.Pure(), StatusTypeSuccess)
 
-	// Verify MustGetByPure works as well
+	// Check MustGetByPure works too
 	enumFailure := enums.MustGetByPure(StatusTypeFailure)
 	require.Equal(t, enumFailure.Code(), int32(protoenumstatus.StatusEnum_FAILURE.Number()))
 	require.Equal(t, enumFailure.Pure(), StatusTypeFailure)
 }
 
-// TestEnums_DefaultValue verifies default value functionality
+// TestEnums_DefaultValue verifies default value features
 // Tests that enums return default value when lookup fails
 //
 // 验证默认值功能
@@ -176,8 +176,8 @@ func TestEnums_DefaultValue(t *testing.T) {
 	require.Equal(t, defaultEnum, notFoundByPure)
 }
 
-// TestEnums_SetDefault verifies default value setting after unset
-// Tests that SetDefault works after unsetting the existing default
+// TestEnums_SetDefault verifies default value setting once unset
+// Tests that SetDefault works once the existing default is unset
 //
 // 验证丢弃后设置默认值
 // 测试 SetDefault 在丢弃现有默认值后可以工作
@@ -215,7 +215,7 @@ func TestEnums_SetDefault(t *testing.T) {
 }
 
 // TestEnums_SetDefaultPanicsOnDuplicate verifies SetDefault panics when default exists
-// Tests that SetDefault panics if default value already exists
+// Tests that SetDefault panics when default value is present
 //
 // 验证 SetDefault 在已有默认值时 panic
 // 测试当默认值已存在时 SetDefault 会 panic
@@ -231,7 +231,7 @@ func TestEnums_SetDefaultPanicsOnDuplicate(t *testing.T) {
 		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess),
 	)
 
-	// SetDefault should panic because default already exists (first item)
+	// SetDefault should panic because default is present (first item)
 	require.Panics(t, func() {
 		successEnum := enums.MustGetByPure(StatusTypeSuccess)
 		enums.SetDefault(successEnum)
@@ -246,7 +246,7 @@ func TestEnums_SetDefaultPanicsOnDuplicate(t *testing.T) {
 func TestEnums_SetDefaultNilPanics(t *testing.T) {
 	type StatusType string
 
-	// Create empty collection without default
+	// Create blank collection without default
 	enums := protoenum.NewEnums[protoenumstatus.StatusEnum, StatusType, *protoenum.MetaNone]()
 
 	// SetDefault with nil should panic (must.Full check)
@@ -282,7 +282,7 @@ func TestEnums_UnsetDefault(t *testing.T) {
 	// Unset the default
 	enums.UnsetDefault()
 
-	// Check GetDefault panics after unset
+	// Check GetDefault panics once unset
 	require.Panics(t, func() {
 		enums.GetDefault()
 	})
@@ -293,7 +293,7 @@ func TestEnums_UnsetDefault(t *testing.T) {
 	})
 }
 
-// TestEnums_WithUnsetDefault verifies chain-style default removal
+// TestEnums_WithUnsetDefault verifies chain-style default unset
 // Tests that WithUnsetDefault removes default value and returns the instance
 //
 // 验证链式取消设置默认值
@@ -313,7 +313,7 @@ func TestEnums_WithUnsetDefault(t *testing.T) {
 		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, StatusTypeFailure),
 	).WithUnsetDefault()
 
-	// Check GetDefault panics after chain unset
+	// Check GetDefault panics once chain unset
 	require.Panics(t, func() {
 		enums.GetDefault()
 	})
@@ -326,7 +326,7 @@ func TestEnums_WithUnsetDefault(t *testing.T) {
 
 // TestEnums_ChainMethods verifies chain-style configuration methods
 // Tests WithDefaultEnum, WithDefaultCode, and WithDefaultName with fluent API
-// Also verifies panic behavior when invalid code or name is specified
+// Checks panic actions when invalid code and name is specified
 //
 // 验证链式配置方法
 // 测试 WithDefaultEnum、WithDefaultCode 和 WithDefaultName 的流式 API
@@ -339,7 +339,7 @@ func TestEnums_ChainMethods(t *testing.T) {
 			StatusTypeSuccess StatusType = "success"
 		)
 
-		// Create empty collection, then add enum and set as default using chain method
+		// Create blank collection, then add enum and set as default using chain method
 		enums := protoenum.NewEnums[protoenumstatus.StatusEnum, StatusType, *protoenum.MetaNone]().
 			WithDefaultEnum(protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess))
 
@@ -347,7 +347,7 @@ func TestEnums_ChainMethods(t *testing.T) {
 		require.Equal(t, StatusTypeSuccess, enums.GetDefault().Pure())
 	})
 
-	// Test that WithDefaultXxx panics when default already exists
+	// Test that WithDefaultXxx panics when default is present
 	t.Run("with-default-panics-on-existing", func(t *testing.T) {
 		type StatusType string
 		const (
@@ -406,6 +406,11 @@ func TestEnums_ChainMethods(t *testing.T) {
 	})
 }
 
+// TestEnums_ListEnums tests the ListEnums method returns all protoEnum values
+// Verifies that the returned slice maintains the defined sequence
+//
+// 测试 ListEnums 方法返回所有 protoEnum 值
+// 验证返回的切片保持定义时的次序
 func TestEnums_ListEnums(t *testing.T) {
 	type ResultType string
 
@@ -432,6 +437,11 @@ func TestEnums_ListEnums(t *testing.T) {
 	require.Equal(t, protoenumresult.ResultEnum_SKIP, protoEnums[3])
 }
 
+// TestEnums_ListPures tests the ListPures method returns all plainEnum values
+// Verifies that the returned slice maintains the defined sequence
+//
+// 测试 ListPures 方法返回所有 plainEnum 值
+// 验证返回的切片保持定义时的次序
 func TestEnums_ListPures(t *testing.T) {
 	type ResultType string
 

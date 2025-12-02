@@ -136,7 +136,7 @@ func main() {
 	// 按枚举名称查找（安全且有默认值回退）
 	miss := enums.GetByName("MISS")
 	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
-	zaplog.LOG.Debug("hans", zap.String("msg", miss.Meta().Hans()))
+	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
 }
 ```
 

@@ -28,13 +28,13 @@ var enums = protoenum.NewEnums(
 )
 
 func main() {
-	// Lookup by enum code (returns default when not found)
+	// Lookup using enum code (returns default when not found)
 	// 按枚举代码查找（找不到时返回默认值）
 	skip := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
 	zaplog.LOG.Debug("pure", zap.String("msg", string(skip.Pure())))
 	zaplog.LOG.Debug("desc", zap.String("msg", skip.Meta().Desc()))
 
-	// Lookup by Go native enum value (type-safe lookup)
+	// Lookup using Go native enum value (type-safe)
 	// 按 Go 原生枚举值查找（类型安全查找）
 	pass := enums.GetByPure(ResultTypePass)
 	base := protoenumresult.ResultEnum(pass.Code())
@@ -46,9 +46,9 @@ func main() {
 		zaplog.LOG.Debug("pass")
 	}
 
-	// Lookup by enum name (safe with default fallback)
+	// Lookup using enum name (safe with default fallback)
 	// 按枚举名称查找（安全且有默认值回退）
 	miss := enums.GetByName("MISS")
 	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
-	zaplog.LOG.Debug("hans", zap.String("msg", miss.Meta().Hans()))
+	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
 }

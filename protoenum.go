@@ -131,12 +131,12 @@ func (c *Enum[protoEnum, plainEnum, extraMeta]) Name() string {
 // Pure returns the Go native enum value associated with this enum
 // Enables type-safe conversion from protobuf enum to Go native enum (e.g. type StatusType string)
 // Use this to get the plain enum value when working with Go native enum patterns
-// Bridges protobuf enums with existing Go enum-based business logic seamlessly
+// Bridges protobuf enums with existing Go enum-based business logic with ease
 //
 // 返回与此枚举关联的 Go 原生枚举值
 // 实现从 protobuf 枚举到 Go 原生枚举的类型安全转换（如 type StatusType string）
 // 在使用 Go 原生枚举模式时使用此方法获取朴素枚举值
-// 在桥接 protobuf 枚举与现有基于 Go 枚举的业务逻辑时至关重要
+// 无缝桥接 protobuf 枚举与现有基于 Go 枚举的业务逻辑
 func (c *Enum[protoEnum, plainEnum, extraMeta]) Pure() plainEnum {
 	return c.pure
 }

@@ -17,7 +17,7 @@ const (
 	StatusTypeFailure StatusType = "failure"
 )
 
-// MetaI18n represents a custom metadata type with bilingual descriptions
+// MetaI18n represents a custom metadata type with dual-language descriptions
 // MetaI18n 代表带有双语描述的自定义元数据类型
 type MetaI18n struct {
 	zhCN string // Chinese description // 中文描述
@@ -27,7 +27,7 @@ type MetaI18n struct {
 func (c *MetaI18n) Chinese() string { return c.zhCN }
 func (c *MetaI18n) English() string { return c.enUS }
 
-// Build enum collection with custom bilingual metadata
+// Build enum collection with custom dual-language metadata
 // 构建带有自定义双语元数据的枚举集合
 var enums = protoenum.NewEnums(
 	protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown, &MetaI18n{zhCN: "未知", enUS: "Unknown"}),
@@ -36,14 +36,14 @@ var enums = protoenum.NewEnums(
 )
 
 func main() {
-	// Lookup by Go native enum value (type-safe lookup)
+	// Lookup using Go native enum value (type-safe)
 	// 按 Go 原生枚举值查找（类型安全查找）
 	success := enums.GetByPure(StatusTypeSuccess)
 	zaplog.LOG.Debug("pure", zap.String("msg", string(success.Pure())))
 	zaplog.LOG.Debug("zh-CN", zap.String("msg", success.Meta().Chinese()))
 	zaplog.LOG.Debug("en-US", zap.String("msg", success.Meta().English()))
 
-	// Lookup by enum code (returns default when not found)
+	// Lookup using enum code (returns default when not found)
 	// 按枚举代码查找（找不到时返回默认值）
 	failure := enums.GetByCode(int32(protoenumstatus.StatusEnum_FAILURE))
 	zaplog.LOG.Debug("pure", zap.String("msg", string(failure.Pure())))

@@ -8,6 +8,8 @@
 package protoenum
 
 import (
+	"slices"
+
 	"github.com/yyle88/must"
 	"github.com/yyle88/tern/slicetern"
 )
@@ -21,29 +23,29 @@ import (
 // 维护三个映射表以通过不同标识符高效检索
 // 为代码、名称和朴素枚举值搜索提供 O(1) 查找性能
 // 支持在查找失败时返回可选的默认值
-type Enums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any] struct {
-	enumElements []*Enum[protoEnum, plainEnum, extraMeta]             // Holds complete Enum instances in defined sequence // 存放所有 Enum 实例，并维持其定义的次序
-	mapCode2Enum map[int32]*Enum[protoEnum, plainEnum, extraMeta]     // Map from numeric code to Enum // 从数字代码到 Enum 的映射
-	mapName2Enum map[string]*Enum[protoEnum, plainEnum, extraMeta]    // Map from name string to Enum // 从名称字符串到 Enum 的映射
-	mapPure2Enum map[plainEnum]*Enum[protoEnum, plainEnum, extraMeta] // Map from plain enum to Enum // 从朴素枚举到 Enum 的映射
-	defaultValue *Enum[protoEnum, plainEnum, extraMeta]               // Configurable default value when lookup misses // 查找失败时的可选默认值
+type Enums[P ProtoEnum, E comparable, M any] struct {
+	enumElements []*Enum[P, E, M]          // Holds complete Enum instances in defined sequence // 存放所有 Enum 实例，并维持其定义的次序
+	mapCode2Enum map[int32]*Enum[P, E, M]  // Map from numeric code to Enum // 从数字代码到 Enum 的映射
+	mapName2Enum map[string]*Enum[P, E, M] // Map from name string to Enum // 从名称字符串到 Enum 的映射
+	mapPure2Enum map[E]*Enum[P, E, M]      // Map from plain enum to Enum // 从朴素枚举到 Enum 的映射
+	defaultValue *Enum[P, E, M]            // Configurable default value when lookup misses // 查找失败时的可选默认值
 }
 
 // NewEnums creates a new Enums collection from the given Enum instances
 // Builds indexed maps enabling efficient lookup using code, name, and pure value
 // The first item becomes the default value if provided
-// Returns a reference to the created Enums collection available when querying
+// Returns a reference to the created Enums collection, usable in lookup operations
 //
 // 从给定的 Enum 实例创建新的 Enums 集合
 // 构建索引映射以通过代码、名称和朴素枚举值高效查找
 // 如果提供了参数，第一个项成为默认值
-// 返回创建的 Enums 集合指针，准备好进行查询
-func NewEnums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any](params ...*Enum[protoEnum, plainEnum, extraMeta]) *Enums[protoEnum, plainEnum, extraMeta] {
-	res := &Enums[protoEnum, plainEnum, extraMeta]{
-		enumElements: append([]*Enum[protoEnum, plainEnum, extraMeta]{}, params...), // Create a distinct copy to maintain the sequence of all enum elements // 创建一个独立的副本以保持所有枚举元素的次序
-		mapCode2Enum: make(map[int32]*Enum[protoEnum, plainEnum, extraMeta], len(params)),
-		mapName2Enum: make(map[string]*Enum[protoEnum, plainEnum, extraMeta], len(params)),
-		mapPure2Enum: make(map[plainEnum]*Enum[protoEnum, plainEnum, extraMeta], len(params)),
+// 返回创建的 Enums 集合指针，可用于各种查找操作
+func NewEnums[P ProtoEnum, E comparable, M any](params ...*Enum[P, E, M]) *Enums[P, E, M] {
+	res := &Enums[P, E, M]{
+		enumElements: slices.Clone(params), // Create a distinct copy to maintain the sequence of all enum elements // 创建一个独立的副本以保持所有枚举元素的次序
+		mapCode2Enum: make(map[int32]*Enum[P, E, M], len(params)),
+		mapName2Enum: make(map[string]*Enum[P, E, M], len(params)),
+		mapPure2Enum: make(map[E]*Enum[P, E, M], len(params)),
 		defaultValue: slicetern.V0(params), // Set first item as default if available // 如果有参数，将第一个设置为默认值
 	}
 	for _, enum := range params {
@@ -71,7 +73,7 @@ func NewEnums[protoEnum ProtoEnum, plainEnum comparable, extraMeta any](params .
 // 使用枚举的数字代码在集合中查找
 // 如果在集合中找不到枚举则返回默认值
 // 如果未配置默认值则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByEnum(enum protoEnum) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) GetByEnum(enum P) *Enum[P, E, M] {
 	if res, ok := c.mapCode2Enum[int32(enum.Number())]; ok {
 		return must.Full(res)
 	}
@@ -83,7 +85,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByEnum(enum protoEnum) *Enum
 //
 // 通过 Protocol Buffer 枚举值检索 Enum
 // 如果在集合中找不到枚举则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByEnum(enum protoEnum) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) MustGetByEnum(enum P) *Enum[P, E, M] {
 	return must.Nice(c.mapCode2Enum[int32(enum.Number())])
 }
 
@@ -96,7 +98,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByEnum(enum protoEnum) *
 // 使用 int32 代码值执行直接映射查找
 // 如果不存在具有给定代码的枚举则返回默认值
 // 如果未配置默认值则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByCode(code int32) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) GetByCode(code int32) *Enum[P, E, M] {
 	if res, ok := c.mapCode2Enum[code]; ok {
 		return must.Full(res)
 	}
@@ -108,7 +110,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByCode(code int32) *Enum[pro
 //
 // 通过数字代码检索 Enum
 // 如果不存在具有给定代码的枚举则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByCode(code int32) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) MustGetByCode(code int32) *Enum[P, E, M] {
 	return must.Nice(c.mapCode2Enum[code])
 }
 
@@ -121,7 +123,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByCode(code int32) *Enum
 // 使用枚举名称字符串执行直接映射查找
 // 如果不存在具有给定名称的枚举则返回默认值
 // 如果未配置默认值则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByName(name string) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) GetByName(name string) *Enum[P, E, M] {
 	if res, ok := c.mapName2Enum[name]; ok {
 		return must.Full(res)
 	}
@@ -133,7 +135,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByName(name string) *Enum[pr
 //
 // 通过字符串名称检索 Enum
 // 如果不存在具有给定名称的枚举则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByName(name string) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) MustGetByName(name string) *Enum[P, E, M] {
 	return must.Nice(c.mapName2Enum[name])
 }
 
@@ -146,7 +148,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByName(name string) *Enu
 // 使用朴素枚举值执行直接映射查找
 // 如果不存在具有给定朴素枚举的枚举则返回默认值
 // 如果未配置默认值则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByPure(pure plainEnum) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) GetByPure(pure E) *Enum[P, E, M] {
 	if res, ok := c.mapPure2Enum[pure]; ok {
 		return must.Full(res)
 	}
@@ -158,7 +160,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) GetByPure(pure plainEnum) *Enum
 //
 // 通过朴素枚举值检索 Enum
 // 如果不存在具有给定朴素枚举的枚举则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByPure(pure plainEnum) *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) MustGetByPure(pure E) *Enum[P, E, M] {
 	return must.Nice(c.mapPure2Enum[pure])
 }
 
@@ -167,7 +169,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) MustGetByPure(pure plainEnum) *
 //
 // 返回当前的默认 Enum 值
 // 如果未配置默认值则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) GetDefault() *Enum[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) GetDefault() *Enum[P, E, M] {
 	return must.Full(c.defaultValue)
 }
 
@@ -178,7 +180,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) GetDefault() *Enum[protoEnum, p
 // 设置查找失败时返回的默认 Enum 值
 // 允许在创建后动态配置回退值
 // 如果 defaultEnum 为 nil 则会 panic，使用 UnsetDefault 清除默认值
-func (c *Enums[protoEnum, plainEnum, extraMeta]) SetDefault(defaultEnum *Enum[protoEnum, plainEnum, extraMeta]) {
+func (c *Enums[P, E, M]) SetDefault(defaultEnum *Enum[P, E, M]) {
 	must.Null(c.defaultValue)
 	c.defaultValue = must.Full(defaultEnum)
 }
@@ -190,7 +192,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) SetDefault(defaultEnum *Enum[pr
 // 取消设置默认 Enum 值
 // 调用此方法后，GetByXxx 查找失败时会 panic
 // 如果当前无默认值则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) UnsetDefault() {
+func (c *Enums[P, E, M]) UnsetDefault() {
 	must.Full(c.defaultValue)
 	c.defaultValue = nil
 }
@@ -202,7 +204,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) UnsetDefault() {
 // 设置默认 Enum 值并返回 Enums 实例
 // 支持初始化时的流式链式配置
 // 适用于在全局变量声明中设置默认值
-func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultEnum(defaultEnum *Enum[protoEnum, plainEnum, extraMeta]) *Enums[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) WithDefaultEnum(defaultEnum *Enum[P, E, M]) *Enums[P, E, M] {
 	c.SetDefault(defaultEnum)
 	return c
 }
@@ -214,7 +216,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultEnum(defaultEnum *En
 // 使用数字代码设置默认值并返回 Enums 实例
 // 当你知道默认枚举代码时的便捷链式方法
 // 如果指定的代码不存在则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultCode(code int32) *Enums[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) WithDefaultCode(code int32) *Enums[P, E, M] {
 	return c.WithDefaultEnum(must.Full(c.mapCode2Enum[code]))
 }
 
@@ -225,7 +227,7 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultCode(code int32) *En
 // 使用枚举名称设置默认值并返回 Enums 实例
 // 当你知道默认枚举名称时的便捷链式方法
 // 如果指定的名称不存在则会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultName(name string) *Enums[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) WithDefaultName(name string) *Enums[P, E, M] {
 	return c.WithDefaultEnum(must.Full(c.mapName2Enum[name]))
 }
 
@@ -236,15 +238,15 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) WithDefaultName(name string) *E
 // 取消设置默认 Enum 值并返回 Enums 实例
 // 支持流式链式配置以移除默认值
 // 之后 GetByXxx 查找失败时会 panic
-func (c *Enums[protoEnum, plainEnum, extraMeta]) WithUnsetDefault() *Enums[protoEnum, plainEnum, extraMeta] {
+func (c *Enums[P, E, M]) WithUnsetDefault() *Enums[P, E, M] {
 	c.UnsetDefault()
 	return c
 }
 
 // ListEnums returns a slice containing all protoEnum values in the sequence they were defined.
 // ListEnums 返回一个包含所有 protoEnum 值的切片，次序与定义时一致。
-func (c *Enums[protoEnum, plainEnum, extraMeta]) ListEnums() []protoEnum {
-	var enums = make([]protoEnum, 0, len(c.enumElements))
+func (c *Enums[P, E, M]) ListEnums() []P {
+	var enums = make([]P, 0, len(c.enumElements))
 	for _, item := range c.enumElements {
 		enums = append(enums, item.Base())
 	}
@@ -253,8 +255,8 @@ func (c *Enums[protoEnum, plainEnum, extraMeta]) ListEnums() []protoEnum {
 
 // ListPures returns a slice containing all plainEnum values in the sequence they were defined.
 // ListPures 返回一个包含所有 plainEnum 值的切片，次序与定义时一致。
-func (c *Enums[protoEnum, plainEnum, extraMeta]) ListPures() []plainEnum {
-	var pures = make([]plainEnum, 0, len(c.mapPure2Enum))
+func (c *Enums[P, E, M]) ListPures() []E {
+	var pures = make([]E, 0, len(c.enumElements))
 	for _, item := range c.enumElements {
 		pures = append(pures, item.Pure())
 	}

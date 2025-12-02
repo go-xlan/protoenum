@@ -118,12 +118,12 @@ var enums = protoenum.NewEnums(
 )
 
 func main() {
-	// Lookup by enum code (returns default when not found)
+	// Lookup using enum code (returns default when not found)
 	skip := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
 	zaplog.LOG.Debug("pure", zap.String("msg", string(skip.Pure())))
 	zaplog.LOG.Debug("desc", zap.String("msg", skip.Meta().Desc()))
 
-	// Lookup by Go native enum value (type-safe lookup)
+	// Lookup using Go native enum value (type-safe)
 	pass := enums.GetByPure(ResultTypePass)
 	base := protoenumresult.ResultEnum(pass.Code())
 	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
@@ -133,10 +133,10 @@ func main() {
 		zaplog.LOG.Debug("pass")
 	}
 
-	// Lookup by enum name (safe with default fallback)
+	// Lookup using enum name (safe with default fallback)
 	miss := enums.GetByName("MISS")
 	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
-	zaplog.LOG.Debug("hans", zap.String("msg", miss.Meta().Hans()))
+	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
 }
 ```
 
@@ -223,15 +223,15 @@ statusEnums := protoenum.NewEnums(
 
 **Multiple lookup methods:**
 ```go
-// By numeric code - always returns valid enum (default if not found)
+// Using numeric code - returns valid enum (default if not found)
 enum := statusEnums.GetByCode(1)
 fmt.Printf("Found: %s\n", enum.Meta().Desc())
 
-// By enum name - guaranteed non-nil
+// Using enum name - guaranteed non-nil
 enum = statusEnums.GetByName("SUCCESS")
 fmt.Printf("Status: %s\n", enum.Meta().Desc())
 
-// By Go native enum value - type-safe lookup
+// Using Go native enum value - type-safe lookup
 enum = statusEnums.GetByPure(StatusTypeSuccess)
 fmt.Printf("Pure: %s\n", enum.Pure())
 
@@ -273,7 +273,7 @@ case StatusTypeUnknown:
     fmt.Println("Unknown status")
 }
 
-// Lookup by Go native enum value
+// Lookup using Go native enum value
 found := enums.GetByPure(StatusTypeSuccess)
 fmt.Printf("Code: %d, Name: %s\n", found.Code(), found.Name())
 ```
@@ -339,7 +339,7 @@ fmt.Printf("Fallback: %s\n", notFound.Meta().Desc())  // Safe without nil check
 enums.UnsetDefault()  // Must unset first
 enums.SetDefault(enums.MustGetByCode(1))  // Then set new default
 
-// After UnsetDefault, lookups panic if not found
+// Once UnsetDefault called, lookups panic if not found
 // This enforces single usage pattern: collections must have defaults
 ```
 

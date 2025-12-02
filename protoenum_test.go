@@ -24,13 +24,11 @@ func TestNewEnum(t *testing.T) {
 	t.Log(enum.Name())
 	t.Log(enum.Pure())
 	t.Log(enum.Meta().Desc())
-	t.Log(enum.Meta().Hans())
 
 	require.Equal(t, enum.Code(), int32(protoenumstatus.StatusEnum_SUCCESS.Number()))
 	require.Equal(t, enum.Name(), protoenumstatus.StatusEnum_SUCCESS.String())
 	require.Equal(t, enum.Pure(), StatusTypeSuccess)
 	require.Equal(t, enum.Meta().Desc(), "任务完成")
-	require.Equal(t, enum.Meta().Hans(), "任务完成")
 }
 
 // TestEnum_Base tests the Base method returns the source enum
@@ -93,10 +91,10 @@ func TestEnum_Pure(t *testing.T) {
 }
 
 // TestNewEnumWithMeta tests custom metadata type with NewEnumWithMeta
-// Checks that user-defined meta types work with the Enum instance
+// Checks that custom meta types work with the Enum instance
 //
 // 验证 NewEnumWithMeta 支持自定义元数据类型
-// 测试用户自定义的 meta 类型与 Enum 包装器配合工作
+// 测试自定义 meta 类型与 Enum 包装器配合工作
 func TestNewEnumWithMeta(t *testing.T) {
 	type StatusType string
 	const (
@@ -105,14 +103,14 @@ func TestNewEnumWithMeta(t *testing.T) {
 		StatusTypeFailure StatusType = "failure"
 	)
 
-	// MetaI18n represents a custom metadata type with bilingual descriptions
+	// MetaI18n represents a custom metadata type with dual-language descriptions
 	// MetaI18n 代表带有双语描述的自定义元数据类型
 	type MetaI18n struct {
 		zh string // Chinese description // 中文描述
 		en string // English description // 英文描述
 	}
 
-	// Create enums with custom bilingual metadata
+	// Create enums with custom dual-language metadata
 	// 使用自定义双语元数据创建枚举
 	enumUnknown := protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown, &MetaI18n{zh: "未知", en: "Unknown"})
 	enumSuccess := protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess, &MetaI18n{zh: "成功", en: "Success"})
@@ -131,7 +129,7 @@ func TestNewEnumWithMeta(t *testing.T) {
 	require.Equal(t, "失败", enumFailure.Meta().zh)
 	require.Equal(t, "Failure", enumFailure.Meta().en)
 
-	// Check Pure still works with custom meta
+	// Check Pure works with custom meta as expected
 	// 验证 Pure 在自定义 meta 下仍然工作
 	require.Equal(t, StatusTypeSuccess, enumSuccess.Pure())
 	require.Equal(t, int32(protoenumstatus.StatusEnum_SUCCESS.Number()), enumSuccess.Code())
