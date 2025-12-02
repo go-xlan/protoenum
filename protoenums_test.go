@@ -176,6 +176,68 @@ func TestEnums_DefaultValue(t *testing.T) {
 	require.Equal(t, defaultEnum, notFoundByPure)
 }
 
+// TestEnums_GetDefaultEnum verifies GetDefaultEnum returns the protoEnum value
+// Tests that GetDefaultEnum returns the correct Protocol Buffer enum type
+//
+// 验证 GetDefaultEnum 返回 protoEnum 值
+// 测试 GetDefaultEnum 返回正确的 Protocol Buffer 枚举类型
+func TestEnums_GetDefaultEnum(t *testing.T) {
+	type StatusType string
+	const (
+		StatusTypeUnknown StatusType = "unknown"
+		StatusTypeSuccess StatusType = "success"
+		StatusTypeFailure StatusType = "failure"
+	)
+
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, StatusTypeFailure),
+	)
+
+	// Test GetDefaultEnum returns the protoEnum value
+	defaultEnum := enums.GetDefaultEnum()
+	t.Log(defaultEnum)
+	require.Equal(t, protoenumstatus.StatusEnum_UNKNOWN, defaultEnum)
+
+	// Test panic when no default is set
+	enums.UnsetDefault()
+	require.Panics(t, func() {
+		enums.GetDefaultEnum()
+	})
+}
+
+// TestEnums_GetDefaultPure verifies GetDefaultPure returns the plainEnum value
+// Tests that GetDefaultPure returns the correct Go native enum type
+//
+// 验证 GetDefaultPure 返回 plainEnum 值
+// 测试 GetDefaultPure 返回正确的 Go 原生枚举类型
+func TestEnums_GetDefaultPure(t *testing.T) {
+	type StatusType string
+	const (
+		StatusTypeUnknown StatusType = "unknown"
+		StatusTypeSuccess StatusType = "success"
+		StatusTypeFailure StatusType = "failure"
+	)
+
+	enums := protoenum.NewEnums(
+		protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess),
+		protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, StatusTypeFailure),
+	)
+
+	// Test GetDefaultPure returns the plainEnum value
+	defaultPure := enums.GetDefaultPure()
+	t.Log(defaultPure)
+	require.Equal(t, StatusTypeUnknown, defaultPure)
+
+	// Test panic when no default is set
+	enums.UnsetDefault()
+	require.Panics(t, func() {
+		enums.GetDefaultPure()
+	})
+}
+
 // TestEnums_SetDefault verifies default value setting once unset
 // Tests that SetDefault works once the existing default is unset
 //
@@ -466,4 +528,86 @@ func TestEnums_ListPures(t *testing.T) {
 	require.Equal(t, ResultTypePass, plainEnums[1])
 	require.Equal(t, ResultTypeMiss, plainEnums[2])
 	require.Equal(t, ResultTypeSkip, plainEnums[3])
+}
+
+// TestEnums_ListValidEnums tests the ListValidEnums method
+// Verifies that the returned slice excludes the default protoEnum value
+//
+// 测试 ListValidEnums 方法
+// 验证返回的切片排除默认 protoEnum 值
+func TestEnums_ListValidEnums(t *testing.T) {
+	type ResultType string
+
+	const (
+		ResultTypeUnknown ResultType = "unknown"
+		ResultTypePass    ResultType = "pass"
+		ResultTypeMiss    ResultType = "miss"
+		ResultTypeSkip    ResultType = "skip"
+	)
+
+	var enums = protoenum.NewEnums(
+		protoenum.NewEnum(protoenumresult.ResultEnum_UNKNOWN, ResultTypeUnknown),
+		protoenum.NewEnum(protoenumresult.ResultEnum_PASS, ResultTypePass),
+		protoenum.NewEnum(protoenumresult.ResultEnum_MISS, ResultTypeMiss),
+		protoenum.NewEnum(protoenumresult.ResultEnum_SKIP, ResultTypeSkip),
+	)
+
+	// Default is UNKNOWN (first item), so result should exclude it
+	protoEnums := enums.ListValidEnums()
+	t.Log(protoEnums)
+	require.Len(t, protoEnums, 3)
+	require.Equal(t, protoenumresult.ResultEnum_PASS, protoEnums[0])
+	require.Equal(t, protoenumresult.ResultEnum_MISS, protoEnums[1])
+	require.Equal(t, protoenumresult.ResultEnum_SKIP, protoEnums[2])
+
+	// When no default is set, returns all values
+	enums.UnsetDefault()
+	allEnums := enums.ListValidEnums()
+	t.Log(allEnums)
+	require.Len(t, allEnums, 4)
+	require.Equal(t, protoenumresult.ResultEnum_UNKNOWN, allEnums[0])
+	require.Equal(t, protoenumresult.ResultEnum_PASS, allEnums[1])
+	require.Equal(t, protoenumresult.ResultEnum_MISS, allEnums[2])
+	require.Equal(t, protoenumresult.ResultEnum_SKIP, allEnums[3])
+}
+
+// TestEnums_ListValidPures tests the ListValidPures method
+// Verifies that the returned slice excludes the default plainEnum value
+//
+// 测试 ListValidPures 方法
+// 验证返回的切片排除默认 plainEnum 值
+func TestEnums_ListValidPures(t *testing.T) {
+	type ResultType string
+
+	const (
+		ResultTypeUnknown ResultType = "unknown"
+		ResultTypePass    ResultType = "pass"
+		ResultTypeMiss    ResultType = "miss"
+		ResultTypeSkip    ResultType = "skip"
+	)
+
+	var enums = protoenum.NewEnums(
+		protoenum.NewEnum(protoenumresult.ResultEnum_UNKNOWN, ResultTypeUnknown),
+		protoenum.NewEnum(protoenumresult.ResultEnum_PASS, ResultTypePass),
+		protoenum.NewEnum(protoenumresult.ResultEnum_MISS, ResultTypeMiss),
+		protoenum.NewEnum(protoenumresult.ResultEnum_SKIP, ResultTypeSkip),
+	)
+
+	// Default is UNKNOWN (first item), so result should exclude it
+	plainEnums := enums.ListValidPures()
+	t.Log(plainEnums)
+	require.Len(t, plainEnums, 3)
+	require.Equal(t, ResultTypePass, plainEnums[0])
+	require.Equal(t, ResultTypeMiss, plainEnums[1])
+	require.Equal(t, ResultTypeSkip, plainEnums[2])
+
+	// When no default is set, returns all values
+	enums.UnsetDefault()
+	allPures := enums.ListValidPures()
+	t.Log(allPures)
+	require.Len(t, allPures, 4)
+	require.Equal(t, ResultTypeUnknown, allPures[0])
+	require.Equal(t, ResultTypePass, allPures[1])
+	require.Equal(t, ResultTypeMiss, allPures[2])
+	require.Equal(t, ResultTypeSkip, allPures[3])
 }

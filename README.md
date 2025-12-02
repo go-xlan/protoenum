@@ -82,6 +82,10 @@ func main() {
 	if base == protoenumstatus.StatusEnum_SUCCESS {
 		zaplog.LOG.Debug("done")
 	}
+
+	// Get default plain enum value (first item becomes default)
+	defaultPure := enums.GetDefaultPure()
+	zaplog.LOG.Debug("default", zap.String("msg", string(defaultPure)))
 }
 ```
 
@@ -137,6 +141,12 @@ func main() {
 	miss := enums.GetByName("MISS")
 	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
 	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
+
+	// List each plain enum value in defined sequence
+	pures := enums.ListPures()
+	for _, pure := range pures {
+		zaplog.LOG.Debug("list", zap.String("pure", string(pure)))
+	}
 }
 ```
 
@@ -171,9 +181,13 @@ func main() {
 | `enums.MustGetByCode(code)` | Strict lookup by code (panics if not found) | `*Enum[P, E, M]` |
 | `enums.MustGetByName(name)` | Strict lookup by name (panics if not found) | `*Enum[P, E, M]` |
 | `enums.MustGetByPure(pure)` | Strict lookup by Go native enum (panics if not found) | `*Enum[P, E, M]` |
-| `enums.ListEnums()` | Returns a slice of all protoEnum values | `[]P` |
-| `enums.ListPures()` | Returns a slice of all plainEnum values | `[]E` |
+| `enums.ListEnums()` | Returns a slice of each protoEnum value | `[]P` |
+| `enums.ListPures()` | Returns a slice of each plainEnum value | `[]E` |
+| `enums.ListValidEnums()` | Returns protoEnum values excluding default | `[]P` |
+| `enums.ListValidPures()` | Returns plainEnum values excluding default | `[]E` |
 | `enums.GetDefault()` | Get current default value (panics if unset) | `*Enum[P, E, M]` |
+| `enums.GetDefaultEnum()` | Get default protoEnum value (panics if unset) | `P` |
+| `enums.GetDefaultPure()` | Get default plainEnum value (panics if unset) | `E` |
 | `enums.SetDefault(enum)` | Set default (requires no existing default) | `void` |
 | `enums.UnsetDefault()` | Remove default (requires existing default) | `void` |
 | `enums.WithDefaultEnum(enum)` | Chain: set default by enum instance | `*Enums[P, E, M]` |
@@ -240,15 +254,22 @@ enum = statusEnums.MustGetByCode(1)
 fmt.Printf("Strict: %s\n", enum.Meta().Desc())
 ```
 
-**Listing all values:**
+**Listing values:**
 ```go
-// Get a slice of all registered proto enums
-allProtoEnums := statusEnums.ListEnums()
+// Get a slice of each registered proto enum
+protoEnums := statusEnums.ListEnums()
 // > [UNKNOWN, SUCCESS, FAILURE]
 
-// Get a slice of all registered plain Go enums
-allPlainEnums := statusEnums.ListPures()
+// Get a slice of each registered plain Go enum
+plainEnums := statusEnums.ListPures()
 // > ["unknown", "success", "failure"]
+
+// Get valid values (excluding default)
+validEnums := statusEnums.ListValidEnums()
+// > [SUCCESS, FAILURE] (UNKNOWN is default, excluded)
+
+validPures := statusEnums.ListValidPures()
+// > ["success", "failure"]
 ```
 
 ### Advanced Usage

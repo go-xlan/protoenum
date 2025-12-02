@@ -103,15 +103,15 @@ func TestNewEnumWithMeta(t *testing.T) {
 		StatusTypeFailure StatusType = "failure"
 	)
 
-	// MetaI18n represents a custom metadata type with dual-language descriptions
-	// MetaI18n 代表带有双语描述的自定义元数据类型
+	// MetaI18n represents a custom metadata type with English/Chinese descriptions
+	// MetaI18n 代表带有中英文描述的自定义元数据类型
 	type MetaI18n struct {
 		zh string // Chinese description // 中文描述
 		en string // English description // 英文描述
 	}
 
-	// Create enums with custom dual-language metadata
-	// 使用自定义双语元数据创建枚举
+	// Create enums with custom English/Chinese metadata
+	// 使用自定义中英文元数据创建枚举
 	enumUnknown := protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown, &MetaI18n{zh: "未知", en: "Unknown"})
 	enumSuccess := protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess, &MetaI18n{zh: "成功", en: "Success"})
 	enumFailure := protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_FAILURE, StatusTypeFailure, &MetaI18n{zh: "失败", en: "Failure"})

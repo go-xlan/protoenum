@@ -42,4 +42,9 @@ func main() {
 	if base == protoenumstatus.StatusEnum_SUCCESS {
 		zaplog.LOG.Debug("done")
 	}
+
+	// Get default plain enum value (first item becomes default)
+	// 获取默认朴素枚举值（第一个元素成为默认值）
+	defaultPure := enums.GetDefaultPure()
+	zaplog.LOG.Debug("default", zap.String("msg", string(defaultPure)))
 }

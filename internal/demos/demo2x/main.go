@@ -51,4 +51,11 @@ func main() {
 	miss := enums.GetByName("MISS")
 	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
 	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
+
+	// List each plain enum value in defined sequence
+	// 按定义次序列出各朴素枚举值
+	pures := enums.ListPures()
+	for _, pure := range pures {
+		zaplog.LOG.Debug("list", zap.String("pure", string(pure)))
+	}
 }

@@ -17,8 +17,8 @@ const (
 	StatusTypeFailure StatusType = "failure"
 )
 
-// MetaI18n represents a custom metadata type with dual-language descriptions
-// MetaI18n 代表带有双语描述的自定义元数据类型
+// MetaI18n represents a custom metadata type with English/Chinese descriptions
+// MetaI18n 代表带有中英文描述的自定义元数据类型
 type MetaI18n struct {
 	zhCN string // Chinese description // 中文描述
 	enUS string // English description // 英文描述
@@ -27,8 +27,8 @@ type MetaI18n struct {
 func (c *MetaI18n) Chinese() string { return c.zhCN }
 func (c *MetaI18n) English() string { return c.enUS }
 
-// Build enum collection with custom dual-language metadata
-// 构建带有自定义双语元数据的枚举集合
+// Build enum collection with custom English/Chinese metadata
+// 构建带有自定义中英文元数据的枚举集合
 var enums = protoenum.NewEnums(
 	protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown, &MetaI18n{zhCN: "未知", enUS: "Unknown"}),
 	protoenum.NewEnumWithMeta(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess, &MetaI18n{zhCN: "成功", enUS: "Success"}),
@@ -54,5 +54,12 @@ func main() {
 	// 使用原生枚举的业务逻辑
 	if success.Pure() == StatusTypeSuccess {
 		zaplog.LOG.Debug("done")
+	}
+
+	// List valid plain enum values (excluding default)
+	// 列出有效的朴素枚举值（排除默认值）
+	validPures := enums.ListValidPures()
+	for _, pure := range validPures {
+		zaplog.LOG.Debug("valid", zap.String("pure", string(pure)))
 	}
 }

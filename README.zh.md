@@ -82,6 +82,10 @@ func main() {
 	if base == protoenumstatus.StatusEnum_SUCCESS {
 		zaplog.LOG.Debug("done")
 	}
+
+	// 获取默认朴素枚举值（第一个元素成为默认值）
+	defaultPure := enums.GetDefaultPure()
+	zaplog.LOG.Debug("default", zap.String("msg", string(defaultPure)))
 }
 ```
 
@@ -137,6 +141,12 @@ func main() {
 	miss := enums.GetByName("MISS")
 	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
 	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
+
+	// 按定义次序列出各朴素枚举值
+	pures := enums.ListPures()
+	for _, pure := range pures {
+		zaplog.LOG.Debug("list", zap.String("pure", string(pure)))
+	}
 }
 ```
 
@@ -171,9 +181,13 @@ func main() {
 | `enums.MustGetByCode(code)` | 严格按代码查找（找不到则 panic） | `*Enum[P, E, M]` |
 | `enums.MustGetByName(name)` | 严格按名称查找（找不到则 panic） | `*Enum[P, E, M]` |
 | `enums.MustGetByPure(pure)` | 严格按 Go 原生枚举查找（找不到则 panic） | `*Enum[P, E, M]` |
-| `enums.ListEnums()` | 返回所有 protoEnum 值的切片 | `[]P` |
-| `enums.ListPures()` | 返回所有 plainEnum 值的切片 | `[]E` |
+| `enums.ListEnums()` | 返回各 protoEnum 值的切片 | `[]P` |
+| `enums.ListPures()` | 返回各 plainEnum 值的切片 | `[]E` |
+| `enums.ListValidEnums()` | 返回排除默认值的 protoEnum 切片 | `[]P` |
+| `enums.ListValidPures()` | 返回排除默认值的 plainEnum 切片 | `[]E` |
 | `enums.GetDefault()` | 获取当前默认值（未设置则 panic） | `*Enum[P, E, M]` |
+| `enums.GetDefaultEnum()` | 获取默认 protoEnum 值（未设置则 panic） | `P` |
+| `enums.GetDefaultPure()` | 获取默认 plainEnum 值（未设置则 panic） | `E` |
 | `enums.SetDefault(enum)` | 设置默认值（要求当前无默认值） | `void` |
 | `enums.UnsetDefault()` | 移除默认值（要求当前有默认值） | `void` |
 | `enums.WithDefaultEnum(enum)` | 链式：通过枚举实例设置默认值 | `*Enums[P, E, M]` |
@@ -240,15 +254,22 @@ enum = statusEnums.MustGetByCode(1)
 fmt.Printf("严格: %s\n", enum.Meta().Desc())
 ```
 
-**列出所有值:**
+**列出枚举值:**
 ```go
-// 获取所有已注册的 proto 枚举切片
-allProtoEnums := statusEnums.ListEnums()
+// 获取各已注册 proto 枚举的切片
+protoEnums := statusEnums.ListEnums()
 // > [UNKNOWN, SUCCESS, FAILURE]
 
-// 获取所有已注册的 Go 原生枚举切片
-allPlainEnums := statusEnums.ListPures()
+// 获取各已注册 Go 原生枚举的切片
+plainEnums := statusEnums.ListPures()
 // > ["unknown", "success", "failure"]
+
+// 获取有效值（排除默认值）
+validEnums := statusEnums.ListValidEnums()
+// > [SUCCESS, FAILURE]（UNKNOWN 是默认值，被排除）
+
+validPures := statusEnums.ListValidPures()
+// > ["success", "failure"]
 ```
 
 ### 高级用法

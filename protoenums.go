@@ -42,7 +42,7 @@ type Enums[P ProtoEnum, E comparable, M any] struct {
 // 返回创建的 Enums 集合指针，可用于各种查找操作
 func NewEnums[P ProtoEnum, E comparable, M any](params ...*Enum[P, E, M]) *Enums[P, E, M] {
 	res := &Enums[P, E, M]{
-		enumElements: slices.Clone(params), // Create a distinct copy to maintain the sequence of all enum elements // 创建一个独立的副本以保持所有枚举元素的次序
+		enumElements: slices.Clone(params), // Clone the slice to preserve the defined sequence of enum elements // 克隆切片以保持枚举元素的定义次序
 		mapCode2Enum: make(map[int32]*Enum[P, E, M], len(params)),
 		mapName2Enum: make(map[string]*Enum[P, E, M], len(params)),
 		mapPure2Enum: make(map[E]*Enum[P, E, M], len(params)),
@@ -173,6 +173,24 @@ func (c *Enums[P, E, M]) GetDefault() *Enum[P, E, M] {
 	return must.Full(c.defaultValue)
 }
 
+// GetDefaultEnum returns the protoEnum value of the default Enum
+// Panics if no default value has been configured
+//
+// 返回默认 Enum 的 protoEnum 值
+// 如果未配置默认值则会 panic
+func (c *Enums[P, E, M]) GetDefaultEnum() P {
+	return must.Full(c.GetDefault()).Base()
+}
+
+// GetDefaultPure returns the plainEnum value of the default Enum
+// Panics if no default value has been configured
+//
+// 返回默认 Enum 的 plainEnum 值
+// 如果未配置默认值则会 panic
+func (c *Enums[P, E, M]) GetDefaultPure() E {
+	return must.Full(c.GetDefault()).Pure()
+}
+
 // SetDefault sets the default Enum value to return when lookups miss
 // Allows dynamic configuration of the fallback value post creation
 // Panics if defaultEnum is nil, use UnsetDefault to remove the default value
@@ -243,8 +261,8 @@ func (c *Enums[P, E, M]) WithUnsetDefault() *Enums[P, E, M] {
 	return c
 }
 
-// ListEnums returns a slice containing all protoEnum values in the sequence they were defined.
-// ListEnums 返回一个包含所有 protoEnum 值的切片，次序与定义时一致。
+// ListEnums returns a slice containing each protoEnum value in the defined sequence.
+// ListEnums 返回一个包含各 protoEnum 值的切片，次序与定义时一致。
 func (c *Enums[P, E, M]) ListEnums() []P {
 	var enums = make([]P, 0, len(c.enumElements))
 	for _, item := range c.enumElements {
@@ -253,12 +271,48 @@ func (c *Enums[P, E, M]) ListEnums() []P {
 	return enums
 }
 
-// ListPures returns a slice containing all plainEnum values in the sequence they were defined.
-// ListPures 返回一个包含所有 plainEnum 值的切片，次序与定义时一致。
+// ListPures returns a slice containing each plainEnum value in the defined sequence.
+// ListPures 返回一个包含各 plainEnum 值的切片，次序与定义时一致。
 func (c *Enums[P, E, M]) ListPures() []E {
 	var pures = make([]E, 0, len(c.enumElements))
 	for _, item := range c.enumElements {
 		pures = append(pures, item.Pure())
 	}
 	return pures
+}
+
+// ListValidEnums returns a slice excluding the default protoEnum value.
+// If no default value is configured, returns each protoEnum value.
+//
+// 返回一个切片，排除默认 protoEnum 值，其余按定义次序排列。
+// 如果未配置默认值，则返回所有 protoEnum 值。
+func (c *Enums[P, E, M]) ListValidEnums() []P {
+	if c.defaultValue != nil {
+		var enums []P
+		for _, item := range c.enumElements {
+			if item != c.defaultValue {
+				enums = append(enums, item.Base())
+			}
+		}
+		return enums
+	}
+	return c.ListEnums()
+}
+
+// ListValidPures returns a slice excluding the default plainEnum value.
+// If no default value is configured, returns each plainEnum value.
+//
+// 返回一个切片，排除默认 plainEnum 值，其余按定义次序排列。
+// 如果未配置默认值，则返回所有 plainEnum 值。
+func (c *Enums[P, E, M]) ListValidPures() []E {
+	if c.defaultValue != nil {
+		var pures []E
+		for _, item := range c.enumElements {
+			if item != c.defaultValue {
+				pures = append(pures, item.Pure())
+			}
+		}
+		return pures
+	}
+	return c.ListPures()
 }
