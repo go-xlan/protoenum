@@ -31,12 +31,12 @@ func main() {
 	// Lookup using enum code (returns default when not found)
 	// 按枚举代码查找（找不到时返回默认值）
 	skip := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
-	zaplog.LOG.Debug("pure", zap.String("msg", string(skip.Pure())))
+	zaplog.LOG.Debug("basic", zap.String("msg", string(skip.Basic())))
 	zaplog.LOG.Debug("desc", zap.String("msg", skip.Meta().Desc()))
 
 	// Lookup using Go native enum value (type-safe)
 	// 按 Go 原生枚举值查找（类型安全查找）
-	pass := enums.GetByPure(ResultTypePass)
+	pass := enums.GetByBasic(ResultTypePass)
 	base := protoenumresult.ResultEnum(pass.Code())
 	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
 
@@ -49,13 +49,13 @@ func main() {
 	// Lookup using enum name (safe with default fallback)
 	// 按枚举名称查找（安全且有默认值回退）
 	miss := enums.GetByName("MISS")
-	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
+	zaplog.LOG.Debug("basic", zap.String("msg", string(miss.Basic())))
 	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
 
-	// List each plain enum value in defined sequence
-	// 按定义次序列出各朴素枚举值
-	pures := enums.ListPures()
-	for _, pure := range pures {
-		zaplog.LOG.Debug("list", zap.String("pure", string(pure)))
+	// List each basic enum value in defined sequence
+	// 按定义次序列出各 basic 枚举值
+	basics := enums.ListBasics()
+	for _, basic := range basics {
+		zaplog.LOG.Debug("list", zap.String("basic", string(basic)))
 	}
 }

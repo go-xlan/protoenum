@@ -9,10 +9,10 @@ import (
 )
 
 // TestNewEnum tests the creation and basic methods of Enum instance
-// Checks Code, Name, Pure, and Meta methods return expected values
+// Checks Code, Name, Basic, and Meta methods return expected values
 //
 // 验证 Enum 包装器的创建和基本方法
-// 测试 Code、Name、Pure 和 Meta 方法返回预期值
+// 测试 Code、Name、Basic 和 Meta 方法返回预期值
 func TestNewEnum(t *testing.T) {
 	type StatusType string
 	const (
@@ -22,21 +22,21 @@ func TestNewEnum(t *testing.T) {
 	enum := protoenum.NewEnumWithDesc(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess, "任务完成")
 	t.Log(enum.Code())
 	t.Log(enum.Name())
-	t.Log(enum.Pure())
+	t.Log(enum.Basic())
 	t.Log(enum.Meta().Desc())
 
 	require.Equal(t, enum.Code(), int32(protoenumstatus.StatusEnum_SUCCESS.Number()))
 	require.Equal(t, enum.Name(), protoenumstatus.StatusEnum_SUCCESS.String())
-	require.Equal(t, enum.Pure(), StatusTypeSuccess)
+	require.Equal(t, enum.Basic(), StatusTypeSuccess)
 	require.Equal(t, enum.Meta().Desc(), "任务完成")
 }
 
-// TestEnum_Base tests the Base method returns the source enum
+// TestEnum_Proto tests the Proto method returns the source enum
 // Checks that the base Protocol Buffer enum is accessible and unchanged
 //
-// 验证 Base 方法返回原始枚举
+// 验证 Proto 方法返回原始枚举
 // 测试底层 Protocol Buffer 枚举可访问且未改变
-func TestEnum_Base(t *testing.T) {
+func TestEnum_Proto(t *testing.T) {
 	type StatusType string
 	const (
 		StatusTypeSuccess StatusType = "success"
@@ -45,9 +45,9 @@ func TestEnum_Base(t *testing.T) {
 	enum := protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess)
 	t.Log(enum.Code())
 	t.Log(enum.Name())
-	t.Log(enum.Pure())
+	t.Log(enum.Basic())
 
-	statusEnum := enum.Base()
+	statusEnum := enum.Proto()
 
 	t.Log(statusEnum.String())
 	t.Log(statusEnum.Number())
@@ -58,12 +58,12 @@ func TestEnum_Base(t *testing.T) {
 	require.Equal(t, statusEnum.Type().Descriptor().Name(), protoenumstatus.StatusEnum_SUCCESS.Type().Descriptor().Name())
 }
 
-// TestEnum_Pure tests the Pure method returns the Go native enum value
-// Checks that the plain enum value is accessible and matches the source
+// TestEnum_Basic tests the Basic method returns the Go native enum value
+// Checks that the basic enum value is accessible and matches the source
 //
-// 验证 Pure 方法返回 Go 原生枚举值
-// 测试朴素枚举值可访问且与原始值匹配
-func TestEnum_Pure(t *testing.T) {
+// 验证 Basic 方法返回 Go 原生枚举值
+// 测试 basic 枚举值可访问且与原始值匹配
+func TestEnum_Basic(t *testing.T) {
 	type StatusType string
 	const (
 		StatusTypeUnknown StatusType = "unknown"
@@ -75,19 +75,19 @@ func TestEnum_Pure(t *testing.T) {
 	enumSuccess := protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess)
 	enumFailure := protoenum.NewEnum(protoenumstatus.StatusEnum_FAILURE, StatusTypeFailure)
 
-	t.Log(enumUnknown.Pure())
-	t.Log(enumSuccess.Pure())
-	t.Log(enumFailure.Pure())
+	t.Log(enumUnknown.Basic())
+	t.Log(enumSuccess.Basic())
+	t.Log(enumFailure.Basic())
 
-	require.Equal(t, enumUnknown.Pure(), StatusTypeUnknown)
-	require.Equal(t, enumSuccess.Pure(), StatusTypeSuccess)
-	require.Equal(t, enumFailure.Pure(), StatusTypeFailure)
+	require.Equal(t, enumUnknown.Basic(), StatusTypeUnknown)
+	require.Equal(t, enumSuccess.Basic(), StatusTypeSuccess)
+	require.Equal(t, enumFailure.Basic(), StatusTypeFailure)
 
-	// Check Pure returns the exact type
-	// 验证 Pure 返回精确的类型
-	pureValue := enumSuccess.Pure()
-	require.Equal(t, pureValue, StatusTypeSuccess)
-	require.Equal(t, string(pureValue), "success")
+	// Check Basic returns the exact type
+	// 验证 Basic 返回精确的类型
+	basicValue := enumSuccess.Basic()
+	require.Equal(t, basicValue, StatusTypeSuccess)
+	require.Equal(t, string(basicValue), "success")
 }
 
 // TestNewEnumWithMeta tests custom metadata type with NewEnumWithMeta
@@ -129,8 +129,8 @@ func TestNewEnumWithMeta(t *testing.T) {
 	require.Equal(t, "失败", enumFailure.Meta().zh)
 	require.Equal(t, "Failure", enumFailure.Meta().en)
 
-	// Check Pure works with custom meta as expected
-	// 验证 Pure 在自定义 meta 下仍然工作
-	require.Equal(t, StatusTypeSuccess, enumSuccess.Pure())
+	// Check Basic works with custom meta as expected
+	// 验证 Basic 在自定义 meta 下仍然工作
+	require.Equal(t, StatusTypeSuccess, enumSuccess.Basic())
 	require.Equal(t, int32(protoenumstatus.StatusEnum_SUCCESS.Number()), enumSuccess.Code())
 }

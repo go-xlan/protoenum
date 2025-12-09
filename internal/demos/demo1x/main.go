@@ -29,7 +29,7 @@ func main() {
 	// Get Go native enum from protobuf enum (returns default when not found)
 	// 从 protobuf 枚举获取 Go 原生枚举（找不到时返回默认值）
 	item := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
-	zaplog.LOG.Debug("pure", zap.String("msg", string(item.Pure())))
+	zaplog.LOG.Debug("basic", zap.String("msg", string(item.Basic())))
 
 	// Convert between protoenum and native enum (safe with default fallback)
 	// 在 protoenum 和原生枚举之间转换（安全且有默认值回退）
@@ -43,8 +43,8 @@ func main() {
 		zaplog.LOG.Debug("done")
 	}
 
-	// Get default plain enum value (first item becomes default)
-	// 获取默认朴素枚举值（第一个元素成为默认值）
-	defaultPure := enums.GetDefaultPure()
-	zaplog.LOG.Debug("default", zap.String("msg", string(defaultPure)))
+	// Get default basic enum value (first item becomes default)
+	// 获取默认 basic 枚举值（第一个元素成为默认值）
+	defaultBasic := enums.GetDefaultBasic()
+	zaplog.LOG.Debug("default", zap.String("msg", string(defaultBasic)))
 }

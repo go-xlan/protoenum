@@ -7,11 +7,12 @@
 
 # protoenum
 
-`protoenum` provides utilities to manage Protobuf enum metadata in Go. It bridges Protobuf enums with Go native enums (`type StatusType string`) via the `Pure()` method, and offers enum collections with simple code, name, and pure-value lookups.
+`protoenum` provides utilities to manage Protobuf enum metadata in Go. It bridges Protobuf enums with Go native enums (`type StatusType string`) via the `Basic()` method, and offers enum collections with simple code, name, and basic-value lookups.
 
 ---
 
 <!-- TEMPLATE (EN) BEGIN: LANGUAGE NAVIGATION -->
+
 ## CHINESE README
 
 [中文说明](README.zh.md)
@@ -20,9 +21,9 @@
 ## Core Features
 
 🎯 **Smart Enum Management**: Wrap Protobuf enums with Go native enums and custom metadata
-🔗 **Go Native Enum Bridge**: Seamless conversion via `Pure()` method to Go native enum types
-⚡ **Multi-Lookup Support**: Fast code, name, and pure-value lookups
-🔄 **Type-Safe Operations**: Triple generics preserve type safety across protobuf, Go native enums, and metadata
+🔗 **Go Native Enum Bridge**: Seamless conversion via `Basic()` method to Go native enum types
+⚡ **Multi-Lookup Support**: Fast code, name, and basic-value lookups
+🔄 **Type-Safe Operations**: Triple generics maintain strict type checks across protobuf, Go native enums, and metadata
 🛡️ **Strict Design**: Single usage pattern prevents misuse with required defaults
 🌍 **Production Grade**: Battle-tested enum handling in enterprise applications
 
@@ -53,6 +54,7 @@ import (
 )
 
 // StatusType represents a Go native enum of status
+// StatusType 代表状态的 Go 原生枚举
 type StatusType string
 
 const (
@@ -62,6 +64,7 @@ const (
 )
 
 // Build status enum collection
+// 构建状态枚举集合
 var enums = protoenum.NewEnums(
 	protoenum.NewEnum(protoenumstatus.StatusEnum_UNKNOWN, StatusTypeUnknown),
 	protoenum.NewEnum(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess),
@@ -70,22 +73,26 @@ var enums = protoenum.NewEnums(
 
 func main() {
 	// Get Go native enum from protobuf enum (returns default when not found)
+	// 从 protobuf 枚举获取 Go 原生枚举（找不到时返回默认值）
 	item := enums.GetByCode(int32(protoenumstatus.StatusEnum_SUCCESS))
-	zaplog.LOG.Debug("pure", zap.String("msg", string(item.Pure())))
+	zaplog.LOG.Debug("basic", zap.String("msg", string(item.Basic())))
 
 	// Convert between protoenum and native enum (safe with default fallback)
+	// 在 protoenum 和原生枚举之间转换（安全且有默认值回退）
 	enum := enums.GetByName("SUCCESS")
 	base := protoenumstatus.StatusEnum(enum.Code())
 	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
 
 	// Use in business logic
+	// 在业务逻辑中使用
 	if base == protoenumstatus.StatusEnum_SUCCESS {
 		zaplog.LOG.Debug("done")
 	}
 
-	// Get default plain enum value (first item becomes default)
-	defaultPure := enums.GetDefaultPure()
-	zaplog.LOG.Debug("default", zap.String("msg", string(defaultPure)))
+	// Get default basic enum value (first item becomes default)
+	// 获取默认 basic 枚举值（第一个元素成为默认值）
+	defaultBasic := enums.GetDefaultBasic()
+	zaplog.LOG.Debug("default", zap.String("msg", string(defaultBasic)))
 }
 ```
 
@@ -104,6 +111,7 @@ import (
 )
 
 // ResultType represents a Go native enum of result
+// ResultType 代表结果的 Go 原生枚举
 type ResultType string
 
 const (
@@ -114,6 +122,7 @@ const (
 )
 
 // Build enum collection with description
+// 构建带描述的枚举集合
 var enums = protoenum.NewEnums(
 	protoenum.NewEnumWithDesc(protoenumresult.ResultEnum_UNKNOWN, ResultTypeUnknown, "其它"),
 	protoenum.NewEnumWithDesc(protoenumresult.ResultEnum_PASS, ResultTypePass, "通过"),
@@ -123,29 +132,34 @@ var enums = protoenum.NewEnums(
 
 func main() {
 	// Lookup using enum code (returns default when not found)
+	// 按枚举代码查找（找不到时返回默认值）
 	skip := enums.GetByCode(int32(protoenumresult.ResultEnum_SKIP))
-	zaplog.LOG.Debug("pure", zap.String("msg", string(skip.Pure())))
+	zaplog.LOG.Debug("basic", zap.String("msg", string(skip.Basic())))
 	zaplog.LOG.Debug("desc", zap.String("msg", skip.Meta().Desc()))
 
 	// Lookup using Go native enum value (type-safe)
-	pass := enums.GetByPure(ResultTypePass)
+	// 按 Go 原生枚举值查找（类型安全查找）
+	pass := enums.GetByBasic(ResultTypePass)
 	base := protoenumresult.ResultEnum(pass.Code())
 	zaplog.LOG.Debug("base", zap.String("msg", base.String()))
 
 	// Business logic with native enum
+	// 使用原生枚举的业务逻辑
 	if base == protoenumresult.ResultEnum_PASS {
 		zaplog.LOG.Debug("pass")
 	}
 
 	// Lookup using enum name (safe with default fallback)
+	// 按枚举名称查找（安全且有默认值回退）
 	miss := enums.GetByName("MISS")
-	zaplog.LOG.Debug("pure", zap.String("msg", string(miss.Pure())))
+	zaplog.LOG.Debug("basic", zap.String("msg", string(miss.Basic())))
 	zaplog.LOG.Debug("desc", zap.String("msg", miss.Meta().Desc()))
 
-	// List each plain enum value in defined sequence
-	pures := enums.ListPures()
-	for _, pure := range pures {
-		zaplog.LOG.Debug("list", zap.String("pure", string(pure)))
+	// List each basic enum value in defined sequence
+	// 按定义次序列出各 basic 枚举值
+	basics := enums.ListBasics()
+	for _, basic := range basics {
+		zaplog.LOG.Debug("list", zap.String("basic", string(basic)))
 	}
 }
 ```
@@ -159,41 +173,70 @@ func main() {
 
 | Method | Description | Returns |
 |--------|-------------|--------|
-| `NewEnum(protoEnum, plainEnum)` | Create enum instance without metadata | `*Enum[P, E, *MetaNone]` |
-| `NewEnumWithDesc(protoEnum, plainEnum, desc)` | Create enum instance with description | `*Enum[P, E, *MetaDesc]` |
-| `NewEnumWithMeta(protoEnum, plainEnum, meta)` | Create enum instance with custom metadata | `*Enum[P, E, M]` |
-| `enum.Base()` | Get underlying protobuf enum | `P` |
+| `NewEnum(protoEnum, basicEnum)` | Create enum instance without metadata | `*Enum[P, B, *MetaNone]` |
+| `NewEnumWithDesc(protoEnum, basicEnum, desc)` | Create enum instance with description | `*Enum[P, B, *MetaDesc]` |
+| `NewEnumWithMeta(protoEnum, basicEnum, meta)` | Create enum instance with custom metadata | `*Enum[P, B, M]` |
+| `enum.Proto()` | Get underlying protobuf enum | `P` |
 | `enum.Code()` | Get numeric code | `int32` |
 | `enum.Name()` | Get enum name | `string` |
-| `enum.Pure()` | Get Go native enum value | `E` |
+| `enum.Basic()` | Get Go native enum value | `B` |
 | `enum.Meta()` | Get custom metadata | `M` |
 
-### Collection Operations
+### Collection Creation
 
 | Method | Description | Returns |
 |--------|-------------|--------|
-| `NewEnums(items...)` | Create collection with strict validation (first item becomes default) | `*Enums[P, E, M]` |
-| `enums.GetByEnum(enum)` | Lookup by protobuf enum (returns default if not found, panics if no default) | `*Enum[P, E, M]` |
-| `enums.GetByCode(code)` | Lookup by code (returns default if not found, panics if no default) | `*Enum[P, E, M]` |
-| `enums.GetByName(name)` | Lookup by name (returns default if not found, panics if no default) | `*Enum[P, E, M]` |
-| `enums.GetByPure(pure)` | Lookup by Go native enum (returns default if not found, panics if no default) | `*Enum[P, E, M]` |
-| `enums.MustGetByEnum(enum)` | Strict lookup by protobuf enum (panics if not found) | `*Enum[P, E, M]` |
-| `enums.MustGetByCode(code)` | Strict lookup by code (panics if not found) | `*Enum[P, E, M]` |
-| `enums.MustGetByName(name)` | Strict lookup by name (panics if not found) | `*Enum[P, E, M]` |
-| `enums.MustGetByPure(pure)` | Strict lookup by Go native enum (panics if not found) | `*Enum[P, E, M]` |
-| `enums.ListEnums()` | Returns a slice of each protoEnum value | `[]P` |
-| `enums.ListPures()` | Returns a slice of each plainEnum value | `[]E` |
-| `enums.ListValidEnums()` | Returns protoEnum values excluding default | `[]P` |
-| `enums.ListValidPures()` | Returns plainEnum values excluding default | `[]E` |
-| `enums.GetDefault()` | Get current default value (panics if unset) | `*Enum[P, E, M]` |
-| `enums.GetDefaultEnum()` | Get default protoEnum value (panics if unset) | `P` |
-| `enums.GetDefaultPure()` | Get default plainEnum value (panics if unset) | `E` |
+| `NewEnums(items...)` | Create collection with strict validation (first item becomes default) | `*Enums[P, B, M]` |
+
+### Existence Check (Lookup)
+
+| Method | Description | Returns |
+|--------|-------------|--------|
+| `enums.LookupByProto(proto)` | Lookup by protobuf enum, check existence | `(*Enum[P, B, M], bool)` |
+| `enums.LookupByCode(code)` | Lookup by code, check existence | `(*Enum[P, B, M], bool)` |
+| `enums.LookupByName(name)` | Lookup by name, check existence | `(*Enum[P, B, M], bool)` |
+| `enums.LookupByBasic(basic)` | Lookup by Go native enum, check existence | `(*Enum[P, B, M], bool)` |
+
+### Safe Access (Get)
+
+| Method | Description | Returns |
+|--------|-------------|--------|
+| `enums.GetByProto(proto)` | Get by protobuf enum (returns default if not found, panics if no default) | `*Enum[P, B, M]` |
+| `enums.GetByCode(code)` | Get by code (returns default if not found, panics if no default) | `*Enum[P, B, M]` |
+| `enums.GetByName(name)` | Get by name (returns default if not found, panics if no default) | `*Enum[P, B, M]` |
+| `enums.GetByBasic(basic)` | Get by Go native enum (returns default if not found, panics if no default) | `*Enum[P, B, M]` |
+
+### Strict Access (MustGet)
+
+| Method | Description | Returns |
+|--------|-------------|--------|
+| `enums.MustGetByProto(proto)` | Strict get by protobuf enum (panics if not found) | `*Enum[P, B, M]` |
+| `enums.MustGetByCode(code)` | Strict get by code (panics if not found) | `*Enum[P, B, M]` |
+| `enums.MustGetByName(name)` | Strict get by name (panics if not found) | `*Enum[P, B, M]` |
+| `enums.MustGetByBasic(basic)` | Strict get by Go native enum (panics if not found) | `*Enum[P, B, M]` |
+
+### Enumeration (List)
+
+| Method | Description | Returns |
+|--------|-------------|--------|
+| `enums.ListProtos()` | Returns a slice of each protoEnum value | `[]P` |
+| `enums.ListBasics()` | Returns a slice of each basicEnum value | `[]B` |
+| `enums.ListValidProtos()` | Returns protoEnum values excluding default | `[]P` |
+| `enums.ListValidBasics()` | Returns basicEnum values excluding default | `[]B` |
+
+### Default Value Management
+
+| Method | Description | Returns |
+|--------|-------------|--------|
+| `enums.GetDefault()` | Get current default value (panics if unset) | `*Enum[P, B, M]` |
+| `enums.GetDefaultProto()` | Get default protoEnum value (panics if unset) | `P` |
+| `enums.GetDefaultBasic()` | Get default basicEnum value (panics if unset) | `B` |
 | `enums.SetDefault(enum)` | Set default (requires no existing default) | `void` |
 | `enums.UnsetDefault()` | Remove default (requires existing default) | `void` |
-| `enums.WithDefaultEnum(enum)` | Chain: set default by enum instance | `*Enums[P, E, M]` |
-| `enums.WithDefaultCode(code)` | Chain: set default by code (panics if not found) | `*Enums[P, E, M]` |
-| `enums.WithDefaultName(name)` | Chain: set default by name (panics if not found) | `*Enums[P, E, M]` |
-| `enums.WithUnsetDefault()` | Chain: remove default value | `*Enums[P, E, M]` |
+| `enums.WithDefault(enum)` | Chain: set default by enum instance | `*Enums[P, B, M]` |
+| `enums.WithDefaultCode(code)` | Chain: set default by code (panics if not found) | `*Enums[P, B, M]` |
+| `enums.WithDefaultName(name)` | Chain: set default by name (panics if not found) | `*Enums[P, B, M]` |
+| `enums.WithUnsetDefault()` | Chain: remove default value | `*Enums[P, B, M]` |
 
 ## Examples
 
@@ -205,13 +248,13 @@ type StatusType string
 const StatusTypeSuccess StatusType = "success"
 
 statusEnum := protoenum.NewEnumWithDesc(protoenumstatus.StatusEnum_SUCCESS, StatusTypeSuccess, "操作成功")
-fmt.Printf("Code: %d, Name: %s, Pure: %s, Description: %s\n",
-    statusEnum.Code(), statusEnum.Name(), statusEnum.Pure(), statusEnum.Meta().Desc())
+fmt.Printf("Code: %d, Name: %s, Basic: %s, Description: %s\n",
+    statusEnum.Code(), statusEnum.Name(), statusEnum.Basic(), statusEnum.Meta().Desc())
 ```
 
 **Accessing underlying protobuf enum:**
 ```go
-originalEnum := statusEnum.Base()
+originalEnum := statusEnum.Proto()
 if originalEnum == protoenumstatus.StatusEnum_SUCCESS {
     fmt.Println("Success status detected")
 }
@@ -246,8 +289,8 @@ enum = statusEnums.GetByName("SUCCESS")
 fmt.Printf("Status: %s\n", enum.Meta().Desc())
 
 // Using Go native enum value - type-safe lookup
-enum = statusEnums.GetByPure(StatusTypeSuccess)
-fmt.Printf("Pure: %s\n", enum.Pure())
+enum = statusEnums.GetByBasic(StatusTypeSuccess)
+fmt.Printf("Basic: %s\n", enum.Basic())
 
 // Strict lookup - panics if not found (no default fallback)
 enum = statusEnums.MustGetByCode(1)
@@ -257,24 +300,24 @@ fmt.Printf("Strict: %s\n", enum.Meta().Desc())
 **Listing values:**
 ```go
 // Get a slice of each registered proto enum
-protoEnums := statusEnums.ListEnums()
+protoEnums := statusEnums.ListProtos()
 // > [UNKNOWN, SUCCESS, FAILURE]
 
-// Get a slice of each registered plain Go enum
-plainEnums := statusEnums.ListPures()
+// Get a slice of each registered basic Go enum
+basicEnums := statusEnums.ListBasics()
 // > ["unknown", "success", "failure"]
 
 // Get valid values (excluding default)
-validEnums := statusEnums.ListValidEnums()
+validProtos := statusEnums.ListValidProtos()
 // > [SUCCESS, FAILURE] (UNKNOWN is default, excluded)
 
-validPures := statusEnums.ListValidPures()
+validBasics := statusEnums.ListValidBasics()
 // > ["success", "failure"]
 ```
 
 ### Advanced Usage
 
-**Go native enum bridge via Pure():**
+**Go native enum bridge via Basic():**
 ```go
 type StatusType string
 const (
@@ -284,10 +327,10 @@ const (
 
 // Bridge protobuf enum to Go native enum
 enum := enums.GetByCode(1)
-pureValue := enum.Pure()  // Returns StatusType("success")
+basicValue := enum.Basic()  // Returns StatusType("success")
 
 // Use in business logic with Go native enum
-switch pureValue {
+switch basicValue {
 case StatusTypeSuccess:
     fmt.Println("Operation succeeded")
 case StatusTypeUnknown:
@@ -295,7 +338,7 @@ case StatusTypeUnknown:
 }
 
 // Lookup using Go native enum value
-found := enums.GetByPure(StatusTypeSuccess)
+found := enums.GetByBasic(StatusTypeSuccess)
 fmt.Printf("Code: %d, Name: %s\n", found.Code(), found.Name())
 ```
 
@@ -365,20 +408,20 @@ enums.SetDefault(enums.MustGetByCode(1))  // Then set new default
 ```
 
 <!-- TEMPLATE (EN) BEGIN: STANDARD PROJECT FOOTER -->
-<!-- VERSION 2025-09-06 04:53:24.895249 +0000 UTC -->
+<!-- VERSION 2025-11-25 03:52:28.131064 +0000 UTC -->
 
 ## 📄 License
 
-MIT License. See [LICENSE](LICENSE).
+MIT License - see [LICENSE](LICENSE).
 
 ---
 
-## 🤝 Contributing
+## 💬 Contact & Feedback
 
 Contributions are welcome! Report bugs, suggest features, and contribute code:
 
-- 🐛 **Found a bug?** Open an issue on GitHub with reproduction steps
-- 💡 **Have a feature idea?** Create an issue to discuss the suggestion
+- 🐛 **Mistake reports?** Open an issue on GitHub with reproduction steps
+- 💡 **Fresh ideas?** Create an issue to discuss
 - 📖 **Documentation confusing?** Report it so we can improve
 - 🚀 **Need new features?** Share the use cases to help us understand requirements
 - ⚡ **Performance issue?** Help us optimize through reporting slow operations
@@ -399,11 +442,11 @@ New code contributions, follow this process:
 4. **Branch**: Create a feature branch (`git checkout -b feature/xxx`).
 5. **Code**: Implement the changes with comprehensive tests
 6. **Testing**: (Golang project) Ensure tests pass (`go test ./...`) and follow Go code style conventions
-7. **Documentation**: Update documentation to support client-facing changes and use significant commit messages
+7. **Documentation**: Update documentation to support client-facing changes
 8. **Stage**: Stage changes (`git add .`)
 9. **Commit**: Commit changes (`git commit -m "Add feature xxx"`) ensuring backward compatible code
 10. **Push**: Push to the branch (`git push origin feature/xxx`).
-11. **PR**: Open a pull request on GitHub (on the GitHub webpage) with detailed description.
+11. **PR**: Open a merge request on GitHub (on the GitHub webpage) with detailed description.
 
 Please ensure tests pass and include relevant documentation updates.
 
@@ -420,7 +463,7 @@ Welcome to contribute to this project via submitting merge requests and reportin
 - 📝 **Write tech blogs** about development tools and workflows - we provide content writing support
 - 🌟 **Join the ecosystem** - committed to supporting open source and the (golang) development scene
 
-**Have Fun Coding with this package!** 🎉
+**Have Fun Coding with this package!** 🎉🎉🎉
 
 <!-- TEMPLATE (EN) END: STANDARD PROJECT FOOTER -->
 
